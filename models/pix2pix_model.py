@@ -1,6 +1,10 @@
 import torch
 from .base_model import BaseModel
 from . import networks
+import numpy as np
+import cv2
+# import .read_DQN
+from .read_DQN import set_up_agent, get_q_values
 
 
 class Pix2PixModel(BaseModel):
@@ -69,6 +73,11 @@ class Pix2PixModel(BaseModel):
             self.optimizer_D = torch.optim.Adam(self.netD.parameters(), lr=opt.lr, betas=(opt.beta1, 0.999))
             self.optimizers.append(self.optimizer_G)
             self.optimizers.append(self.optimizer_D)
+            
+        # ------------------------------------------------------------------
+        # DQN model 
+        self.agent = set_up_agent()
+        # ------------------------------------------------------------------
 
     def set_input(self, input):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
@@ -86,6 +95,34 @@ class Pix2PixModel(BaseModel):
     def forward(self):
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""
         self.fake_B = self.netG(self.real_A)  # G(A)
+        # ---------------------------------
+        # TODO some grad, detach thing
+        # print("self.fake_B", self.fake_B.shape)
+        
+        
+        A = np.expand_dims(self.real_A.squeeze().cpu().detach().numpy(), axis=-1)
+        B = np.expand_dims(self.real_B.squeeze().cpu().detach().numpy(), axis=-1)
+        F_B = np.expand_dims(self.fake_B.squeeze().cpu().detach().numpy(), axis=-1)
+        # print(self.real_A.shape)
+        # print(B.shape)
+        
+
+        
+        B_255 = B / 2 * 255 + 127.5
+        B_255 = B_255.astype(np.uint8)
+        
+
+        Q = get_q_values(self.agent, B_255)
+        print(self.image_paths)
+        print(Q)
+        
+        size_length = 256
+        B_resize = cv2.resize(B_255, (size_length, size_length))
+        
+        cv2.imshow('real_B', B_resize)
+        cv2.waitKey(0)  # 等待用戶按下任意按鍵
+        cv2.destroyAllWindows()  # 關閉顯示視窗
+        # ---------------------------------
 
     def backward_D(self):
         """Calculate GAN loss for the discriminator"""
