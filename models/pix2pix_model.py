@@ -5,7 +5,7 @@ import numpy as np
 import cv2
 # import .read_DQN
 from .read_DQN import set_up_agent, get_q_values
-
+import util.util as util
 
 class Pix2PixModel(BaseModel):
     """ This class implements the pix2pix model, for learning a mapping from input images to output images given paired data.
@@ -61,7 +61,12 @@ class Pix2PixModel(BaseModel):
                                       not opt.no_dropout, opt.init_type, opt.init_gain, self.gpu_ids)
 
         if self.isTrain:  # define a discriminator; conditional GANs need to take both input and output images; Therefore, #channels for D is input_nc + output_nc
-            self.netD = networks.define_D(opt.input_nc + opt.output_nc, opt.ndf, opt.netD,
+            self.netD_input = opt.netD_input
+            if self.netD_input == "AB":
+                netD_input_nc = opt.input_nc + opt.output_nc
+            elif self.netD_input == "B":
+                netD_input_nc = opt.output_nc
+            self.netD = networks.define_D(netD_input_nc, opt.ndf, opt.netD,
                                           opt.n_layers_D, opt.norm, opt.init_type, opt.init_gain, self.gpu_ids)
 
         if self.isTrain:
@@ -95,43 +100,57 @@ class Pix2PixModel(BaseModel):
     def forward(self):
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""
         self.fake_B = self.netG(self.real_A)  # G(A)
-        # ---------------------------------
-        # TODO some grad, detach thing
-        # print("self.fake_B", self.fake_B.shape)
         
-        
-        A = np.expand_dims(self.real_A.squeeze().cpu().detach().numpy(), axis=-1)
-        B = np.expand_dims(self.real_B.squeeze().cpu().detach().numpy(), axis=-1)
-        F_B = np.expand_dims(self.fake_B.squeeze().cpu().detach().numpy(), axis=-1)
-        # print(self.real_A.shape)
-        # print(B.shape)
-        
-
-        
-        B_255 = B / 2 * 255 + 127.5
-        B_255 = B_255.astype(np.uint8)
-        
-
-        Q = get_q_values(self.agent, B_255)
-        print(self.image_paths)
-        print(Q)
-        
-        size_length = 256
-        B_resize = cv2.resize(B_255, (size_length, size_length))
-        
-        cv2.imshow('real_B', B_resize)
-        cv2.waitKey(0)  # 等待用戶按下任意按鍵
-        cv2.destroyAllWindows()  # 關閉顯示視窗
-        # ---------------------------------
+        # ----------------------------------------------------------------------------
+        # add DQN
+        try:
+            self.fake_B_RL = self.fake_B / 2.0 + 0.5
+            q = self.agent.DQN(self.fake_B_RL)
+            # print(q)
+        except:
+            pass
+        # ----------------------------------------------------------------------------
 
     def backward_D(self):
         """Calculate GAN loss for the discriminator"""
         # Fake; stop backprop to the generator by detaching fake_B
-        fake_AB = torch.cat((self.real_A, self.fake_B), 1)  # we use conditional GANs; we need to feed both input and output to the discriminator
+        if self.netD_input == "AB":
+            fake_AB = torch.cat((self.real_A, self.fake_B), 1)  # we use conditional GANs; we need to feed both input and output to the discriminator
+        elif self.netD_input == "B":
+            fake_AB = self.fake_B # we use conditional GANs; we need to feed output to the discriminator
+        
         pred_fake = self.netD(fake_AB.detach())
         self.loss_D_fake = self.criterionGAN(pred_fake, False)
+        
+        # ----------------------------------------------------------------------------
+        # try:
+        #     print(self.netD)
+        #     print("--")
+        # print("fake_AB", fake_AB.shape, fake_AB.max(), fake_AB.min())
+        #     # print("fake_AB", fake_AB)
+        #     # print("fake_AB.detach", fake_AB.detach())
+        #     pred_fake = self.netD(fake_AB.detach())
+        #     print("pred_fake", pred_fake.shape, pred_fake.max(), pred_fake.min(), pred_fake)     
+            
+            
+        # cv2.imshow('fake_AB', util.tensor2im(fake_AB))
+        # cv2.waitKey(0)  # 等待用戶按下任意按鍵
+        # cv2.destroyAllWindows()  # 關閉顯示視窗
+        # except:
+        #     pass       
+
+        # ----------------------------------------------------------------------------
         # Real
         real_AB = torch.cat((self.real_A, self.real_B), 1)
+        
+        if self.netD_input == "AB":
+            real_AB = torch.cat((self.real_A, self.real_B), 1)
+        elif self.netD_input == "B":
+            real_AB = self.real_B
+        
+        
+        
+        
         pred_real = self.netD(real_AB)
         self.loss_D_real = self.criterionGAN(pred_real, True)
         # combine loss and calculate gradients
@@ -141,7 +160,11 @@ class Pix2PixModel(BaseModel):
     def backward_G(self):
         """Calculate GAN and L1 loss for the generator"""
         # First, G(A) should fake the discriminator
-        fake_AB = torch.cat((self.real_A, self.fake_B), 1)
+        if self.netD_input == "AB":
+            fake_AB = torch.cat((self.real_A, self.fake_B), 1)
+        elif self.netD_input == "B":
+            fake_AB = self.fake_B
+
         pred_fake = self.netD(fake_AB)
         self.loss_G_GAN = self.criterionGAN(pred_fake, True)
         # Second, G(A) = B

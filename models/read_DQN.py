@@ -25,6 +25,8 @@ def set_up_agent(model_dir = "/home/neaf2080/code/yen/webots_arm/integration/con
     agent = DQNAgent(env=env)     
     agent.DQN.load_state_dict(torch.load(model_dir))
     
+    agent.DQN.eval()
+    
     return agent
 
 def deal_with_image(state_dir: str = "/home/neaf2080/code/yen/pytorch-CycleGAN-and-pix2pix/Robotic_arm_image_84/Simulation/train/107.png"):
