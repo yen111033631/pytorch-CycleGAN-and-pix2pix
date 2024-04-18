@@ -25,7 +25,9 @@ def set_up_agent(model_dir = "/home/neaf2080/code/yen/webots_arm/integration/con
     agent = DQNAgent(env=env)     
     agent.DQN.load_state_dict(torch.load(model_dir))
     
-    agent.DQN.eval()
+    agent.DQN.requires_grad_(False)
+    
+    # agent.DQN.eval()
     
     return agent
 

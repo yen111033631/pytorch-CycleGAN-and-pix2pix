@@ -108,15 +108,15 @@ class Pix2PixModel(BaseModel):
         # ----------------------------------------------------------------------------
         # add DQN
         if self.is_added_DQN:
-            print(self.is_added_DQN)
+            # print(self.is_added_DQN)
 
             self.fake_B_RL = self.fake_B / 2.0 + 0.5
             self.fake_B = self.agent.DQN(self.fake_B_RL)
-            # self.fake_B = self.fake_B / 100
+            self.fake_B = self.fake_B / 100
 
             self.real_B_RL = self.real_B / 2.0 + 0.5
             self.real_B = self.agent.DQN(self.real_B_RL)
-            # self.real_B = self.real_B / 100
+            self.real_B = self.real_B / 100
         # ----------------------------------------------------------------------------
         
 
