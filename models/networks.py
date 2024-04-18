@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from torch.nn import init
+import torch.nn.functional as F
 import functools
 from torch.optim import lr_scheduler
 
@@ -160,7 +161,7 @@ def define_G(input_nc, output_nc, ngf, netG, norm='batch', use_dropout=False, in
     return init_net(net, init_type, init_gain, gpu_ids)
 
 
-def define_D(input_nc, ndf, netD, n_layers_D=3, norm='batch', init_type='normal', init_gain=0.02, gpu_ids=[]):
+def define_D(input_nc, ndf, netD, n_layers_D=3, norm='batch', init_type='normal', init_gain=0.02, gpu_ids=[], n_actions=6):
     """Create a discriminator
 
     Parameters:
@@ -199,6 +200,8 @@ def define_D(input_nc, ndf, netD, n_layers_D=3, norm='batch', init_type='normal'
         net = NLayerDiscriminator(input_nc, ndf, n_layers_D, norm_layer=norm_layer)
     elif netD == 'pixel':     # classify if each pixel is real or fake
         net = PixelDiscriminator(input_nc, ndf, norm_layer=norm_layer)
+    elif netD == 'numerical':     # RL actions as input
+        net = NumericalDiscriminator(n_actions, n_actions)
     else:
         raise NotImplementedError('Discriminator model name [%s] is not recognized' % netD)
     return init_net(net, init_type, init_gain, gpu_ids)
@@ -614,3 +617,17 @@ class PixelDiscriminator(nn.Module):
     def forward(self, input):
         """Standard forward."""
         return self.net(input)
+
+
+class NumericalDiscriminator(nn.Module):
+
+    def __init__(self, n_actions, n_outputs):
+        super(NumericalDiscriminator, self).__init__()
+        self.layer1 = nn.Linear(n_actions, 128)
+        self.layer2 = nn.Linear(128, 128)
+        self.layer3 = nn.Linear(128, n_outputs)
+
+    def forward(self, x):
+        x = F.relu(self.layer1(x))
+        x = F.relu(self.layer2(x))
+        return self.layer3(x)

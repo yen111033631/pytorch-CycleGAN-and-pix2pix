@@ -12,8 +12,10 @@
 # python test.py --dataroot ./datasets/facades --name facades_pix2pix_netG_resnet_9blocks --model pix2pix --direction BtoA --netG resnet_9blocks
 # ----------------------------------
 # try 
-python train.py --dataroot ./Robotic_arm_image_84/RS --name pix2pix_arm_84_test --model pix2pix --direction AtoB --netG resnet_9blocks --n_epochs 1 --n_epochs_decay 0 --crop_size 84 --input_nc 1 --output_nc 1 --load_size 84 --netD_input "B"
-# python train.py --dataroot ./datasets/facades --name facades_pix2pix_256_test --model pix2pix --direction BtoA --netG resnet_9blocks --n_epochs 1 --n_epochs_decay 0 --input_nc 1 --output_nc 1 --netD_input "AB"
+# python train.py --dataroot ./Robotic_arm_image_84/RS --name pix2pix_arm_84_test --model pix2pix --direction AtoB --netG resnet_9blocks --n_epochs 1 --n_epochs_decay 0 --crop_size 84 --input_nc 1 --output_nc 1 --load_size 84 --netD_input "B"
+# python train.py --dataroot ./Robotic_arm_image_84/RS --name pix2pix_arm_84_test --model pix2pix --direction AtoB --netG resnet_9blocks --is_added_DQN True --n_epochs 1 --n_epochs_decay 0 --crop_size 84 --input_nc 1 --output_nc 1 --load_size 84 --netD_input B
+python train.py --dataroot ./Robotic_arm_image_84/RS --name pix2pix_arm_84_test --model pix2pix --direction AtoB --netG resnet_9blocks --is_added_DQN 0 --n_epochs 1 --n_epochs_decay 0 --crop_size 84 --input_nc 1 --output_nc 1 --load_size 84 --netD_input B
+
 
 
 

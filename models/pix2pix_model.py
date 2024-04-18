@@ -56,6 +56,13 @@ class Pix2PixModel(BaseModel):
             self.model_names = ['G', 'D']
         else:  # during test time, only load G
             self.model_names = ['G']
+        # ------------------------------------------------------------------
+        # DQN model 
+        self.is_added_DQN = opt.is_added_DQN
+        print("self.is_added_DQN", self.is_added_DQN == True)
+        self.agent = set_up_agent()
+        opt.netD = "numerical" if self.is_added_DQN else opt.netD
+        # ------------------------------------------------------------------
         # define networks (both generator and discriminator)
         self.netG = networks.define_G(opt.input_nc, opt.output_nc, opt.ngf, opt.netG, opt.norm,
                                       not opt.no_dropout, opt.init_type, opt.init_gain, self.gpu_ids)
@@ -79,10 +86,6 @@ class Pix2PixModel(BaseModel):
             self.optimizers.append(self.optimizer_G)
             self.optimizers.append(self.optimizer_D)
             
-        # ------------------------------------------------------------------
-        # DQN model 
-        self.agent = set_up_agent()
-        # ------------------------------------------------------------------
 
     def set_input(self, input):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
@@ -101,15 +104,21 @@ class Pix2PixModel(BaseModel):
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""
         self.fake_B = self.netG(self.real_A)  # G(A)
         
+    def input_RL_model(self):
         # ----------------------------------------------------------------------------
         # add DQN
-        try:
+        if self.is_added_DQN:
+            print(self.is_added_DQN)
+
             self.fake_B_RL = self.fake_B / 2.0 + 0.5
-            q = self.agent.DQN(self.fake_B_RL)
-            # print(q)
-        except:
-            pass
+            self.fake_B = self.agent.DQN(self.fake_B_RL)
+            # self.fake_B = self.fake_B / 100
+
+            self.real_B_RL = self.real_B / 2.0 + 0.5
+            self.real_B = self.agent.DQN(self.real_B_RL)
+            # self.real_B = self.real_B / 100
         # ----------------------------------------------------------------------------
+        
 
     def backward_D(self):
         """Calculate GAN loss for the discriminator"""
@@ -121,35 +130,12 @@ class Pix2PixModel(BaseModel):
         
         pred_fake = self.netD(fake_AB.detach())
         self.loss_D_fake = self.criterionGAN(pred_fake, False)
-        
-        # ----------------------------------------------------------------------------
-        # try:
-        #     print(self.netD)
-        #     print("--")
-        # print("fake_AB", fake_AB.shape, fake_AB.max(), fake_AB.min())
-        #     # print("fake_AB", fake_AB)
-        #     # print("fake_AB.detach", fake_AB.detach())
-        #     pred_fake = self.netD(fake_AB.detach())
-        #     print("pred_fake", pred_fake.shape, pred_fake.max(), pred_fake.min(), pred_fake)     
-            
-            
-        # cv2.imshow('fake_AB', util.tensor2im(fake_AB))
-        # cv2.waitKey(0)  # 等待用戶按下任意按鍵
-        # cv2.destroyAllWindows()  # 關閉顯示視窗
-        # except:
-        #     pass       
-
-        # ----------------------------------------------------------------------------
+       
         # Real
-        real_AB = torch.cat((self.real_A, self.real_B), 1)
-        
         if self.netD_input == "AB":
             real_AB = torch.cat((self.real_A, self.real_B), 1)
         elif self.netD_input == "B":
-            real_AB = self.real_B
-        
-        
-        
+            real_AB = self.real_B        
         
         pred_real = self.netD(real_AB)
         self.loss_D_real = self.criterionGAN(pred_real, True)
@@ -175,6 +161,7 @@ class Pix2PixModel(BaseModel):
 
     def optimize_parameters(self):
         self.forward()                   # compute fake images: G(A)
+        self.input_RL_model()            # RL(G(A)) and RL(B)
         # update D
         self.set_requires_grad(self.netD, True)  # enable backprop for D
         self.optimizer_D.zero_grad()     # set D's gradients to zero
