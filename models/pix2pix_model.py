@@ -59,7 +59,8 @@ class Pix2PixModel(BaseModel):
         # ------------------------------------------------------------------
         # DQN model 
         self.is_added_DQN = opt.is_added_DQN
-        # print("self.is_added_DQN", self.is_added_DQN == True)
+        if self.is_added_DQN:
+            self.loss_names.append("G_L1_RL")
         self.agent = set_up_agent()
         opt.netD = "numerical" if self.is_added_DQN else opt.netD
         # ------------------------------------------------------------------
@@ -126,6 +127,7 @@ class Pix2PixModel(BaseModel):
 
     def backward_D(self):
         """Calculate GAN loss for the discriminator"""
+        # ----------------------------------------------------------------------------
         # Fake; stop backprop to the generator by detaching fake_B
         if self.netD_input == "AB":
             fake_AB = torch.cat((self.real_A, self.fake_B), 1)  # we use conditional GANs; we need to feed both input and output to the discriminator
@@ -134,7 +136,7 @@ class Pix2PixModel(BaseModel):
         
         pred_fake = self.netD(fake_AB.detach())
         self.loss_D_fake = self.criterionGAN(pred_fake, False)
-       
+        # ----------------------------------------------------------------------------
         # Real
         if self.netD_input == "AB":
             real_AB = torch.cat((self.real_A, self.real_B), 1)
@@ -146,9 +148,11 @@ class Pix2PixModel(BaseModel):
         # combine loss and calculate gradients
         self.loss_D = (self.loss_D_fake + self.loss_D_real) * 0.5
         self.loss_D.backward()
+        # ----------------------------------------------------------------------------
 
     def backward_G(self):
         """Calculate GAN and L1 loss for the generator"""
+        # ----------------------------------------------------------------------------
         # First, G(A) should fake the discriminator
         if self.netD_input == "AB":
             fake_AB = torch.cat((self.real_A, self.fake_B), 1)
@@ -157,26 +161,20 @@ class Pix2PixModel(BaseModel):
 
         pred_fake = self.netD(fake_AB)
         self.loss_G_GAN = self.criterionGAN(pred_fake, True)
-        # Second, G(A) = B
+        # ----------------------------------------------------------------------------
+        # Second, G(A) ~= B
         if self.is_added_DQN:
-            Fake_B = self.fake_B_RL
-            Real_B = self.real_B_RL
-        else:
-            Fake_B = self.fake_B
-            Real_B = self.real_B
+            self.loss_G_L1_RL = self.criterionL1(self.fake_B_RL, self.real_B_RL)
             
-        self.loss_G_L1 = self.criterionL1(Fake_B, Real_B) * self.opt.lambda_L1
+        self.loss_G_L1 = self.criterionL1(self.fake_B, self.real_B) * self.opt.lambda_L1
+        # ----------------------------------------------------------------------------
         # combine loss and calculate gradients
-        self.loss_G = self.loss_G_GAN + self.loss_G_L1
-        
-        # print("-------")
-        # print("fake_B", Fake_B)
-        # print("real_B", Real_B)
-        # print("loss_G_GAN", self.loss_G_GAN)
-        # print("loss_G_L1", self.loss_G_L1)
-        # print("loss_G", self.loss_G)
-        # print("-------")
+        if self.is_added_DQN:
+            self.loss_G = self.loss_G_GAN + self.loss_G_L1 + self.loss_G_L1_RL
+        else:
+            self.loss_G = self.loss_G_GAN + self.loss_G_L1
         self.loss_G.backward()
+        # ----------------------------------------------------------------------------
 
     def optimize_parameters(self):
         self.forward()                   # compute fake images: G(A)

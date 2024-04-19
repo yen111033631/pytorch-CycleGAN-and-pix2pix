@@ -25,6 +25,30 @@ from models import create_model
 from util.visualizer import Visualizer
 
 from torch.utils.tensorboard import SummaryWriter
+import os, socket
+from datetime import datetime
+
+def set_log_dir():
+    model_path = f"./checkpoints/{opt.name}"
+    os.makedirs(model_path, exist_ok=True)
+    env_listdir = os.listdir(model_path)
+
+    # 獲取當前機器名稱
+    hostname = socket.gethostname()  
+    
+    num = 0
+    for env_dir in env_listdir:
+        if hostname in env_dir:
+            now_num = int(env_dir[-3:]) 
+            num = now_num if now_num > num else num
+            
+    
+    current_time = datetime.now().strftime("%b%d_H%H_M%M_S%S")
+
+    log_dir = f"{model_path}/{current_time}_{hostname}_{(num + 1):03d}"
+    os.makedirs(log_dir, exist_ok=True)
+    return log_dir
+    
 
 if __name__ == '__main__':
     opt = TrainOptions().parse()   # get training options
@@ -37,7 +61,7 @@ if __name__ == '__main__':
     visualizer = Visualizer(opt)   # create a visualizer that display/save images and plots
     total_iters = 0                # the total number of training iterations
 
-    summary_writer = SummaryWriter() 
+    summary_writer = SummaryWriter(log_dir=set_log_dir()) 
     
     # -------------------------------------------------------------------------------
     # print(dataset.dataset[0]["A_paths"])

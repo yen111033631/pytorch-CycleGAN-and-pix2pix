@@ -18,7 +18,8 @@
 # ----------------------------------
 # add RL
 # python train.py --dataroot ./Robotic_arm_image_84/RS --name pix2pix_arm_84_add_RL --model pix2pix --direction AtoB --netG resnet_9blocks --is_added_DQN 1 --n_epochs 100 --n_epochs_decay 100 --crop_size 84 --input_nc 1 --output_nc 1 --load_size 84 --netD_input B
-python train.py --dataroot ./Robotic_arm_image_84/RS --name pix2pix_arm_84_add_RL___ --model pix2pix --direction AtoB --netG resnet_9blocks --is_added_DQN 1 --n_epochs 200 --n_epochs_decay 200 --crop_size 84 --input_nc 1 --output_nc 1 --load_size 84 --netD_input B
+# python train.py --dataroot ./Robotic_arm_image_84/RS --name pix2pix_arm_84_add_RL___ --model pix2pix --direction AtoB --netG resnet_9blocks --is_added_DQN 1 --n_epochs 200 --n_epochs_decay 200 --crop_size 84 --input_nc 1 --output_nc 1 --load_size 84 --netD_input B
+python train.py --dataroot ./Robotic_arm_image_84/RS --name pix2pix_arm_84_add_RL_test --model pix2pix --direction AtoB --netG resnet_9blocks --is_added_DQN 1 --n_epochs 10 --n_epochs_decay 0 --crop_size 84 --input_nc 1 --output_nc 1 --load_size 84 --netD_input B
 
 
 # ----------------------------------
