@@ -2,6 +2,7 @@
 debug*
 datasets/
 checkpoints/
+runs/
 results/
 build/
 dist/

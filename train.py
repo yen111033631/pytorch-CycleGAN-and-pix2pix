@@ -24,6 +24,8 @@ from data import create_dataset
 from models import create_model
 from util.visualizer import Visualizer
 
+from torch.utils.tensorboard import SummaryWriter
+
 if __name__ == '__main__':
     opt = TrainOptions().parse()   # get training options
     dataset = create_dataset(opt)  # create a dataset given opt.dataset_mode and other options
@@ -34,7 +36,8 @@ if __name__ == '__main__':
     model.setup(opt)               # regular setup: load and print networks; create schedulers
     visualizer = Visualizer(opt)   # create a visualizer that display/save images and plots
     total_iters = 0                # the total number of training iterations
-    
+
+    summary_writer = SummaryWriter() 
     
     # -------------------------------------------------------------------------------
     # print(dataset.dataset[0]["A_paths"])
@@ -69,12 +72,15 @@ if __name__ == '__main__':
                 model.compute_visuals()
                 visualizer.display_current_results(model.get_current_visuals(), epoch, save_result)
 
+
             if total_iters % opt.print_freq == 0:    # print training losses and save logging information to the disk
                 losses = model.get_current_losses()
                 t_comp = (time.time() - iter_start_time) / opt.batch_size
                 visualizer.print_current_losses(epoch, epoch_iter, losses, t_comp, t_data)
                 if opt.display_id > 0:
                     visualizer.plot_current_losses(epoch, float(epoch_iter) / dataset_size, losses)
+                for key in losses.keys():
+                    summary_writer.add_scalar(key, losses[key], total_iters)
 
             if total_iters % opt.save_latest_freq == 0:   # cache our latest model every <save_latest_freq> iterations
                 print('saving the latest model (epoch %d, total_iters %d)' % (epoch, total_iters))

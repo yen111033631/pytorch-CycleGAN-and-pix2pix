@@ -59,7 +59,7 @@ class Pix2PixModel(BaseModel):
         # ------------------------------------------------------------------
         # DQN model 
         self.is_added_DQN = opt.is_added_DQN
-        print("self.is_added_DQN", self.is_added_DQN == True)
+        # print("self.is_added_DQN", self.is_added_DQN == True)
         self.agent = set_up_agent()
         opt.netD = "numerical" if self.is_added_DQN else opt.netD
         # ------------------------------------------------------------------
@@ -85,6 +85,10 @@ class Pix2PixModel(BaseModel):
             self.optimizer_D = torch.optim.Adam(self.netD.parameters(), lr=opt.lr, betas=(opt.beta1, 0.999))
             self.optimizers.append(self.optimizer_G)
             self.optimizers.append(self.optimizer_D)
+        
+        # # ------------------
+        # print(self.netD)
+        # # ------------------
             
 
     def set_input(self, input):
@@ -111,12 +115,12 @@ class Pix2PixModel(BaseModel):
             # print(self.is_added_DQN)
 
             self.fake_B_RL = self.fake_B / 2.0 + 0.5
-            self.fake_B = self.agent.DQN(self.fake_B_RL)
-            self.fake_B = self.fake_B / 100
+            self.fake_B_RL = self.agent.DQN(self.fake_B_RL)
+            # self.fake_B_RL = self.fake_B_RL / 100
 
             self.real_B_RL = self.real_B / 2.0 + 0.5
-            self.real_B = self.agent.DQN(self.real_B_RL)
-            self.real_B = self.real_B / 100
+            self.real_B_RL = self.agent.DQN(self.real_B_RL)
+            # self.real_B_RL = self.real_B_RL / 100
         # ----------------------------------------------------------------------------
         
 
@@ -126,7 +130,7 @@ class Pix2PixModel(BaseModel):
         if self.netD_input == "AB":
             fake_AB = torch.cat((self.real_A, self.fake_B), 1)  # we use conditional GANs; we need to feed both input and output to the discriminator
         elif self.netD_input == "B":
-            fake_AB = self.fake_B # we use conditional GANs; we need to feed output to the discriminator
+            fake_AB = self.fake_B  if not(self.is_added_DQN)  else self.fake_B_RL  # we use conditional GANs; we need to feed output to the discriminator
         
         pred_fake = self.netD(fake_AB.detach())
         self.loss_D_fake = self.criterionGAN(pred_fake, False)
@@ -135,7 +139,7 @@ class Pix2PixModel(BaseModel):
         if self.netD_input == "AB":
             real_AB = torch.cat((self.real_A, self.real_B), 1)
         elif self.netD_input == "B":
-            real_AB = self.real_B        
+            real_AB = self.real_B if not(self.is_added_DQN)  else self.real_B_RL     
         
         pred_real = self.netD(real_AB)
         self.loss_D_real = self.criterionGAN(pred_real, True)
@@ -149,14 +153,29 @@ class Pix2PixModel(BaseModel):
         if self.netD_input == "AB":
             fake_AB = torch.cat((self.real_A, self.fake_B), 1)
         elif self.netD_input == "B":
-            fake_AB = self.fake_B
+            fake_AB = self.fake_B if not(self.is_added_DQN)  else self.fake_B_RL 
 
         pred_fake = self.netD(fake_AB)
         self.loss_G_GAN = self.criterionGAN(pred_fake, True)
         # Second, G(A) = B
-        self.loss_G_L1 = self.criterionL1(self.fake_B, self.real_B) * self.opt.lambda_L1
+        if self.is_added_DQN:
+            Fake_B = self.fake_B_RL
+            Real_B = self.real_B_RL
+        else:
+            Fake_B = self.fake_B
+            Real_B = self.real_B
+            
+        self.loss_G_L1 = self.criterionL1(Fake_B, Real_B) * self.opt.lambda_L1
         # combine loss and calculate gradients
         self.loss_G = self.loss_G_GAN + self.loss_G_L1
+        
+        # print("-------")
+        # print("fake_B", Fake_B)
+        # print("real_B", Real_B)
+        # print("loss_G_GAN", self.loss_G_GAN)
+        # print("loss_G_L1", self.loss_G_L1)
+        # print("loss_G", self.loss_G)
+        # print("-------")
         self.loss_G.backward()
 
     def optimize_parameters(self):
