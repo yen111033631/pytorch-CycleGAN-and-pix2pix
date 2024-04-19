@@ -86,6 +86,8 @@ class Pix2PixModel(BaseModel):
             self.optimizer_D = torch.optim.Adam(self.netD.parameters(), lr=opt.lr, betas=(opt.beta1, 0.999))
             self.optimizers.append(self.optimizer_G)
             self.optimizers.append(self.optimizer_D)
+        else:
+            self.losses_list = []
         
         # # ------------------
         # print(self.netD)
@@ -108,6 +110,26 @@ class Pix2PixModel(BaseModel):
     def forward(self):
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""
         self.fake_B = self.netG(self.real_A)  # G(A)
+        
+        self.input_RL_model()  # RL(G(A)) and RL(B)
+
+    def compute_loss(self):
+        if self.is_added_DQN:
+            fake_B_tensor = torch.tensor(self.fake_B_RL)
+            real_B_tensor = torch.tensor(self.real_B_RL)
+        else:
+        # 將self.fake_B和self.real_B轉換為PyTorch tensor類型
+            fake_B_tensor = torch.tensor(self.fake_B)
+            real_B_tensor = torch.tensor(self.real_B)
+        
+        # 創建L1損失函數的實例並計算損失
+        l1_loss = torch.nn.L1Loss()
+        loss = l1_loss(fake_B_tensor, real_B_tensor)
+        
+        self.losses_list.append(loss.item())
+        
+        # 打印計算得到的損失值
+        # print("L1損失：", loss.item())
         
     def input_RL_model(self):
         # ----------------------------------------------------------------------------

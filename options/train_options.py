@@ -35,9 +35,6 @@ class TrainOptions(BaseOptions):
         parser.add_argument('--pool_size', type=int, default=50, help='the size of image buffer that stores previously generated images')
         parser.add_argument('--lr_policy', type=str, default='linear', help='learning rate policy. [linear | step | plateau | cosine]')
         parser.add_argument('--lr_decay_iters', type=int, default=50, help='multiply by a gamma every lr_decay_iters iterations')
-        
-        # add DQN
-        parser.add_argument('--is_added_DQN', type=int, default=0, help='there will be a DQN after netG. [0 | 1]')
         # netD setting
         parser.add_argument('--netD_input', type=str, default="AB", help='input of netD is concatnated with A and B, or only B. [AB | B].')
         

@@ -57,6 +57,8 @@ class BaseOptions():
         # wandb parameters
         parser.add_argument('--use_wandb', action='store_true', help='if specified, then init wandb logging')
         parser.add_argument('--wandb_project_name', type=str, default='CycleGAN-and-pix2pix', help='specify wandb project name')
+        # add DQN
+        parser.add_argument('--is_added_DQN', type=int, default=0, help='there will be a DQN after netG. [0 | 1]')
         self.initialized = True
         return parser
 
