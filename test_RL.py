@@ -40,6 +40,17 @@ except ImportError:
     print('Warning: wandb package cannot be found. The option "--use_wandb" will result in error.')
 
 
+def save_txt(opt, losses_list):
+    txt_dir = f"./results/{opt.name}/test_result.txt"
+    with open(txt_dir, "a") as txt_file:
+        txt_file.write("--------------------------------------\n")
+        txt_file.write(f"is_added_DQN: \t{opt.is_added_DQN}\n")
+        txt_file.write(f"loss mean: \t\t{np.mean(losses_list)}\n")
+        txt_file.write(f"loss std:  \t\t{np.std(losses_list)}\n")
+        txt_file.write(f"loss lens: \t\t{len(losses_list)}\n")
+        txt_file.write("--------------------------------------\n")
+    
+
 if __name__ == '__main__':
     opt = TestOptions().parse()  # get test options
     # hard-code some parameters for test
@@ -51,10 +62,6 @@ if __name__ == '__main__':
     dataset = create_dataset(opt)  # create a dataset given opt.dataset_mode and other options
     model = create_model(opt)      # create a model given opt.model and other options
     model.setup(opt)               # regular setup: load and print networks; create schedulers
-    
-    
-
-
 
     # initialize logger
     if opt.use_wandb:
@@ -84,6 +91,7 @@ if __name__ == '__main__':
             print('processing (%04d)-th image... %s' % (i, img_path))
         save_images(webpage, visuals, img_path, aspect_ratio=opt.aspect_ratio, width=opt.display_winsize, use_wandb=opt.use_wandb)
     
+    save_txt(opt, model.losses_list)
     print("--------------------------------------")
     print("loss mean: \t", np.mean(model.losses_list), "\n"
           "loss std:  \t", np.std(model.losses_list), "\n"

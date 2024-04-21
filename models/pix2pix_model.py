@@ -48,11 +48,15 @@ class Pix2PixModel(BaseModel):
         """
         BaseModel.__init__(self, opt)
         # specify the training losses you want to print out. The training/test scripts will call <BaseModel.get_current_losses>
+        
+        self.netG_loss_element = opt.netG_loss_setting.split("+")
+        
+        self.loss_names = self.netG_loss_element.copy()
+        
         self.netD_existed = opt.netD_existed
         if self.netD_existed:
-            self.loss_names = ['G_GAN', 'G_L1', 'D_real', 'D_fake']
-        else:
-            self.loss_names = ['G_L1']
+            self.loss_names.append('D_real')
+            self.loss_names.append('D_fake')
         # specify the images you want to save/display. The training/test scripts will call <BaseModel.get_current_visuals>
         self.visual_names = ['real_A', 'fake_B', 'real_B']
         # specify the models you want to save to the disk. The training/test scripts will call <BaseModel.save_networks> and <BaseModel.load_networks>
@@ -63,8 +67,6 @@ class Pix2PixModel(BaseModel):
         # ------------------------------------------------------------------
         # DQN model 
         self.is_added_DQN = opt.is_added_DQN
-        if self.is_added_DQN:
-            self.loss_names.append("G_L1_RL")
         self.agent = set_up_agent()
         opt.netD = "numerical" if self.is_added_DQN else opt.netD
         # ------------------------------------------------------------------
@@ -118,13 +120,13 @@ class Pix2PixModel(BaseModel):
         self.input_RL_model()  # RL(G(A)) and RL(B)
 
     def compute_loss(self):
-        if self.is_added_DQN:
-            fake_B_tensor = torch.tensor(self.fake_B_RL)
-            real_B_tensor = torch.tensor(self.real_B_RL)
+        if self.is_added_DQN:            
+            fake_B_tensor = self.fake_B_RL.clone().detach()
+            real_B_tensor = self.real_B_RL.clone().detach()
         else:
         # 將self.fake_B和self.real_B轉換為PyTorch tensor類型
-            fake_B_tensor = torch.tensor(self.fake_B)
-            real_B_tensor = torch.tensor(self.real_B)
+            fake_B_tensor = self.fake_B.clone().detach()
+            real_B_tensor = self.real_B.clone().detach()
         
         # 創建L1損失函數的實例並計算損失
         l1_loss = torch.nn.L1Loss()
@@ -195,15 +197,12 @@ class Pix2PixModel(BaseModel):
             
         self.loss_G_L1 = self.criterionL1(self.fake_B, self.real_B) * self.opt.lambda_L1
         # ----------------------------------------------------------------------------
-        # combine loss and calculate gradients 
-        # TODO netG loss
-        if self.netD_existed:
-            if self.is_added_DQN:
-                self.loss_G = self.loss_G_GAN + self.loss_G_L1 + self.loss_G_L1_RL
-            else:
-                self.loss_G = self.loss_G_GAN + self.loss_G_L1
-        else:
-            self.loss_G = self.loss_G_L1 + self.loss_G_L1_RL
+        # combine loss and calculate gradients             
+        losss = []
+        for element in self.netG_loss_element:
+            losss.append(getattr(self, 'loss_' + element))
+        self.loss_G = sum(losss)
+        
         self.loss_G.backward()
         # ----------------------------------------------------------------------------
 

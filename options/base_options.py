@@ -60,6 +60,8 @@ class BaseOptions():
         # add DQN
         parser.add_argument('--is_added_DQN', type=int, default=0, help='there will be a DQN after netG. [0 | 1]')
         parser.add_argument('--netD_existed', type=int, default=1, help='netD exists or not. [0 | 1].')
+        parser.add_argument('--netG_loss_setting', type=str, default="G_GAN+G_L1", help='netD loss setting. elements: "G_GAN", "G_L1", "G_L1_RL"')
+        
         self.initialized = True
         return parser
 
