@@ -59,6 +59,7 @@ class BaseOptions():
         parser.add_argument('--wandb_project_name', type=str, default='CycleGAN-and-pix2pix', help='specify wandb project name')
         # add DQN
         parser.add_argument('--is_added_DQN', type=int, default=0, help='there will be a DQN after netG. [0 | 1]')
+        parser.add_argument('--netD_existed', type=int, default=1, help='netD exists or not. [0 | 1].')
         self.initialized = True
         return parser
 

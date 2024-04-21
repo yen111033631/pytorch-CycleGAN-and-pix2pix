@@ -32,6 +32,7 @@ from data import create_dataset
 from models import create_model
 from util.visualizer import save_images
 from util import html
+import numpy as np
 
 try:
     import wandb
@@ -83,5 +84,9 @@ if __name__ == '__main__':
             print('processing (%04d)-th image... %s' % (i, img_path))
         save_images(webpage, visuals, img_path, aspect_ratio=opt.aspect_ratio, width=opt.display_winsize, use_wandb=opt.use_wandb)
     
-    print(model.losses_list)
+    print("--------------------------------------")
+    print("loss mean: \t", np.mean(model.losses_list), "\n"
+          "loss std:  \t", np.std(model.losses_list), "\n"
+          "loss lens: \t", len(model.losses_list))
+    print("--------------------------------------")
     webpage.save()  # save the HTML
