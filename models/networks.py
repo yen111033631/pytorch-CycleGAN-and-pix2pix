@@ -641,13 +641,13 @@ class PixelNumericalDiscriminator1(nn.Module):
         
         self.con = nn.Sequential(
             nn.Conv2d(in_channels, 32, kernel_size=5, stride=2, padding=1),
-            # nn.LeakyReLU(),
+            nn.LeakyReLU(),
             nn.Conv2d(32, 64, kernel_size=3, stride=2),
-            # nn.LeakyReLU(),
+            nn.LeakyReLU(),
             nn.Conv2d(64, 64, kernel_size=3, stride=1),
-            # nn.LeakyReLU(),
+            nn.LeakyReLU(),
             nn.Conv2d(64, 63, kernel_size=3, stride=1),
-            # nn.LeakyReLU(),
+            nn.LeakyReLU(),
         )
         
         self.linear = nn.Sequential(
@@ -657,9 +657,9 @@ class PixelNumericalDiscriminator1(nn.Module):
         
         self.back_layers = nn.Sequential(
             nn.Conv2d(64, 64, kernel_size=3, stride=1),
-            # nn.LeakyReLU(),
+            nn.LeakyReLU(),
             nn.Conv2d(64, 64, kernel_size=3, stride=1),
-            # nn.LeakyReLU(),
+            nn.LeakyReLU(),
             nn.Conv2d(64, 1, kernel_size=3, stride=1),
             # nn.LeakyReLU(),            
         )
