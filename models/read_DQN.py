@@ -19,7 +19,7 @@ class Env:
                                             shape=(channel_n, 84, 84), 
                                             dtype=np.uint8)
         
-def set_up_agent(model_dir = "/home/neaf2080/code/yen/webots_arm/integration/controllers/train_RL_env/checkpoint/Apr07_H16_M46_S15_cube_cam_neaf-3090_001/good_model_state_dict.pt"):
+def set_up_agent(model_dir = "./checkpoints/DQN_gray/Apr15_H17_M58_S28_cube_gray_neaf2080_002/good_model_state_dict.pt"):
     env = Env()
 
     agent = DQNAgent(env=env)     
