@@ -40,13 +40,17 @@ except ImportError:
     print('Warning: wandb package cannot be found. The option "--use_wandb" will result in error.')
 
 
-def save_txt(opt, losses_list):
+def save_txt(opt, losses_list, same_list):
     txt_dir = f"./results/{opt.name}/test_result.txt"
     with open(txt_dir, "a") as txt_file:
         txt_file.write("--------------------------------------\n")
         txt_file.write(f"is_added_DQN: \t{opt.is_added_DQN}\n")
-        txt_file.write(f"loss mean: \t\t{np.mean(losses_list)}\n")
-        txt_file.write(f"loss std:  \t\t{np.std(losses_list)}\n")
+        txt_file.write(f"loss mean:    \t{np.mean(losses_list)}\n")
+        txt_file.write(f"loss std:     \t{np.std(losses_list)}\n")
+        txt_file.write(f"loss lens:    \t{len(losses_list)}\n")
+        txt_file.write(f"loss max:     \t{np.max(losses_list)}\n")
+        txt_file.write(f"loss min:     \t{np.min(losses_list)}\n")
+        txt_file.write(f"success rate: \t{np.mean(same_list)}\n")
         txt_file.write(f"loss lens: \t\t{len(losses_list)}\n")
         txt_file.write("--------------------------------------\n")
     
@@ -91,7 +95,7 @@ if __name__ == '__main__':
             print('processing (%04d)-th image... %s' % (i, img_path))
         save_images(webpage, visuals, img_path, aspect_ratio=opt.aspect_ratio, width=opt.display_winsize, use_wandb=opt.use_wandb)
     
-    # save_txt(opt, model.losses_list)
+    save_txt(opt, model.losses_list, model.same_list)
     # print(model.losses_list)
     # print(model.same_list)
     print("--------------------------------------")

@@ -136,8 +136,8 @@ class Pix2PixModel(BaseModel):
         real_B_action = real_B_tensor.argmax(1)[0].item()
         fake_B_action = fake_B_tensor.argmax(1)[0].item()
         is_same = real_B_action == fake_B_action
-        print("fake_B_tensor", fake_B_tensor.cpu().numpy())
-        print("real_B_tensor", real_B_tensor.cpu().numpy())
+        print("fake_B_tensor", np.round(fake_B_tensor.cpu().numpy(), 2))
+        print("real_B_tensor", np.round(real_B_tensor.cpu().numpy(), 2))
         print(real_B_action, fake_B_action, is_same, loss.item())
         print("---")
         # print(loss)
