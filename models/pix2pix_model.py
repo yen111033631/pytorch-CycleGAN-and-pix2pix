@@ -1,4 +1,5 @@
 import torch
+import torch.nn.functional as F
 from .base_model import BaseModel
 from . import networks
 import numpy as np
@@ -194,6 +195,9 @@ class Pix2PixModel(BaseModel):
         # Second, G(A) ~= B
         if self.is_added_DQN:
             self.loss_G_L1_RL = self.criterionL1(self.fake_B_RL, self.real_B_RL)
+            
+            cos_sim = F.cosine_similarity(self.fake_B_RL, self.real_B_RL, dim=-1)
+            self.loss_G_cos_RL = (1 - cos_sim.mean()) * 500
             
         self.loss_G_L1 = self.criterionL1(self.fake_B, self.real_B) * self.opt.lambda_L1
         # ----------------------------------------------------------------------------

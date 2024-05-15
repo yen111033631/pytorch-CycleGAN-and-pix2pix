@@ -69,23 +69,61 @@ n_epochs_decay=150
 
 # ----------------------------------
 # add DQN, no netD, netG_loss_setting "G_L1_RL"
-python train.py --dataroot ./Robotic_arm_image_84/RS \
-                --model pix2pix \
-                --direction AtoB \
-                --netG resnet_9blocks \
-                --crop_size 84 \
-                --load_size 84 \
-                --input_nc 1 \
-                --output_nc 1 \
-                --name pix2pix_arm_84_DQN1_netD0_netGloss_RLL1 \
-                --is_added_DQN 1 \
-                --netD_existed 0 \
-                --netG_loss_setting "G_L1_RL" \
-                --n_epochs ${n_epochs} \
-                --n_epochs_decay ${n_epochs} \
-                --netD_input B
+# python train.py --dataroot ./Robotic_arm_image_84/RS \
+#                 --model pix2pix \
+#                 --direction AtoB \
+#                 --netG resnet_9blocks \
+#                 --crop_size 84 \
+#                 --load_size 84 \
+#                 --input_nc 1 \
+#                 --output_nc 1 \
+#                 --name pix2pix_arm_84_DQN1_netD0_netGloss_RLL1 \
+#                 --is_added_DQN 1 \
+#                 --netD_existed 0 \
+#                 --netG_loss_setting "G_L1_RL" \
+#                 --n_epochs ${n_epochs} \
+#                 --n_epochs_decay ${n_epochs} \
+#                 --netD_input B
 # ----------------------------------
 # add DQN, no netD, netG_loss_setting "G_L1+G_L1_RL"
+# python train.py --dataroot ./Robotic_arm_image_84/RS \
+#                 --model pix2pix \
+#                 --direction AtoB \
+#                 --netG resnet_9blocks \
+#                 --crop_size 84 \
+#                 --load_size 84 \
+#                 --input_nc 1 \
+#                 --output_nc 1 \
+#                 --name pix2pix_arm_84_DQN1_netD0_netGloss_L1_RLL1 \
+#                 --is_added_DQN 1 \
+#                 --netD_existed 0 \
+#                 --netG_loss_setting "G_L1+G_L1_RL" \
+#                 --n_epochs ${n_epochs} \
+#                 --n_epochs_decay ${n_epochs} \
+#                 --netD_input B
+
+
+n_epochs=150
+n_epochs_decay=150
+# ----------------------------------
+# add DQN, no netD, netG_loss_setting "G_L1_RL"
+# python train.py --dataroot ./Robotic_arm_image_84/RS \
+#                 --model pix2pix \
+#                 --direction AtoB \
+#                 --netG resnet_9blocks \
+#                 --crop_size 84 \
+#                 --load_size 84 \
+#                 --input_nc 1 \
+#                 --output_nc 1 \
+#                 --name pix2pix_arm_84_DQN1_netD0_netGloss_RLL1 \
+#                 --is_added_DQN 1 \
+#                 --netD_existed 0 \
+#                 --netG_loss_setting "G_L1_RL" \
+#                 --n_epochs ${n_epochs} \
+#                 --n_epochs_decay ${n_epochs} \
+#                 --netD_input B
+
+
 python train.py --dataroot ./Robotic_arm_image_84/RS \
                 --model pix2pix \
                 --direction AtoB \
@@ -94,10 +132,11 @@ python train.py --dataroot ./Robotic_arm_image_84/RS \
                 --load_size 84 \
                 --input_nc 1 \
                 --output_nc 1 \
-                --name pix2pix_arm_84_DQN1_netD0_netGloss_L1_RLL1 \
+                --name pix2pix_arm_84_DQN1_netD0_netGloss_RLcos \
                 --is_added_DQN 1 \
                 --netD_existed 0 \
-                --netG_loss_setting "G_L1+G_L1_RL" \
+                --netG_loss_setting "G_cos_RL" \
                 --n_epochs ${n_epochs} \
                 --n_epochs_decay ${n_epochs} \
                 --netD_input B
+
