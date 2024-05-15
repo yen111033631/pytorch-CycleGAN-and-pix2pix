@@ -202,6 +202,8 @@ def define_D(input_nc, ndf, netD, n_layers_D=3, norm='batch', init_type='normal'
         net = PixelDiscriminator(input_nc, ndf, norm_layer=norm_layer)
     elif netD == 'numerical':     # RL actions as input
         net = NumericalDiscriminator(n_actions, n_actions)
+    elif netD == 'pixelnumerical':     # RL state and actions as input
+        net = PixelNumericalDiscriminator1(input_nc, n_actions)
     else:
         raise NotImplementedError('Discriminator model name [%s] is not recognized' % netD)
     return init_net(net, init_type, init_gain, gpu_ids)
@@ -582,7 +584,7 @@ class NLayerDiscriminator(nn.Module):
         sequence += [nn.Conv2d(ndf * nf_mult, 1, kernel_size=kw, stride=1, padding=padw)]  # output 1 channel prediction map
         self.model = nn.Sequential(*sequence)
 
-    def forward(self, input):
+    def forward(self, input, _=None):
         """Standard forward."""
         return self.model(input)
 
@@ -614,7 +616,7 @@ class PixelDiscriminator(nn.Module):
 
         self.net = nn.Sequential(*self.net)
 
-    def forward(self, input):
+    def forward(self, input, _=None):
         """Standard forward."""
         return self.net(input)
 
@@ -627,7 +629,51 @@ class NumericalDiscriminator(nn.Module):
         self.layer2 = nn.Linear(128, 128)
         self.layer3 = nn.Linear(128, n_outputs)
 
-    def forward(self, x):
+    def forward(self, x, _=None):
         x = F.relu(self.layer1(x))
         x = F.relu(self.layer2(x))
         return self.layer3(x)
+    
+
+class PixelNumericalDiscriminator1(nn.Module):
+    def __init__(self, in_channels=1, num_actions=5):
+        super(PixelNumericalDiscriminator1, self).__init__()
+        
+        self.con = nn.Sequential(
+            nn.Conv2d(in_channels, 32, kernel_size=5, stride=2, padding=1),
+            nn.LeakyReLU(),
+            nn.Conv2d(32, 64, kernel_size=3, stride=2),
+            nn.LeakyReLU(),
+            nn.Conv2d(64, 64, kernel_size=3, stride=1),
+            nn.LeakyReLU(),
+            nn.Conv2d(64, 63, kernel_size=3, stride=1),
+            nn.LeakyReLU(),
+        )
+        
+        self.linear = nn.Sequential(
+            nn.Linear(num_actions, 256),
+            nn.Linear(256, 256),
+        )
+        
+        self.back_layers = nn.Sequential(
+            nn.Conv2d(64, 64, kernel_size=3, stride=1),
+            nn.LeakyReLU(),
+            nn.Conv2d(64, 64, kernel_size=3, stride=1),
+            nn.LeakyReLU(),
+            nn.Conv2d(64, 1, kernel_size=3, stride=1),
+            # nn.LeakyReLU(),            
+        )
+        
+        self.fcs = nn.Sequential(
+            nn.Linear(10 * 10 * 64, 512),
+            nn.Linear(512, num_actions)
+        ) 
+
+    def forward(self, image, arm_data):
+        x = self.con(image)
+        c = self.linear(arm_data)
+        c = torch.reshape(c, (1, 1, 16, 16))
+        x = torch.cat([x, c], dim=1)
+        x = self.back_layers(x)
+        # x = self.fcs(x.reshape(x.size(0), -1))
+        return x

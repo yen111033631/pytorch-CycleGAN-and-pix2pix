@@ -55,6 +55,7 @@ class Pix2PixModel(BaseModel):
         self.loss_names = self.netG_loss_element.copy()
         
         self.netD_existed = opt.netD_existed
+        self.netD_setting = opt.netD
         if self.netD_existed:
             self.loss_names.append('D_real')
             self.loss_names.append('D_fake')
@@ -69,7 +70,7 @@ class Pix2PixModel(BaseModel):
         # DQN model 
         self.is_added_DQN = opt.is_added_DQN
         self.agent = set_up_agent()
-        opt.netD = "numerical" if self.is_added_DQN else opt.netD
+        # opt.netD = "numerical" if self.is_added_DQN else opt.netD
         # ------------------------------------------------------------------
         # define networks (both generator and discriminator)
         self.netG = networks.define_G(opt.input_nc, opt.output_nc, opt.ngf, opt.netG, opt.norm,
@@ -95,6 +96,7 @@ class Pix2PixModel(BaseModel):
             self.optimizers.append(self.optimizer_D)
         else:
             self.losses_list = []
+            self.same_list = []
         
         # # ------------------
         # print(self.netD)
@@ -132,11 +134,17 @@ class Pix2PixModel(BaseModel):
         # 創建L1損失函數的實例並計算損失
         l1_loss = torch.nn.L1Loss()
         loss = l1_loss(fake_B_tensor, real_B_tensor)
+        real_B_action = real_B_tensor.argmax(1)[0].item()
+        fake_B_action = fake_B_tensor.argmax(1)[0].item()
+        is_same = real_B_action == fake_B_action
+        print("fake_B_tensor", np.round(fake_B_tensor.cpu().numpy(), 2))
+        print("real_B_tensor", np.round(real_B_tensor.cpu().numpy(), 2))
+        print(real_B_action, fake_B_action, is_same, loss.item())
+        print("---")
+        # print(loss)
         
         self.losses_list.append(loss.item())
-        
-        # 打印計算得到的損失值
-        # print("L1損失：", loss.item())
+        self.same_list.append(is_same)
         
     def input_RL_model(self):
         # ----------------------------------------------------------------------------
@@ -158,21 +166,60 @@ class Pix2PixModel(BaseModel):
         """Calculate GAN loss for the discriminator"""
         # ----------------------------------------------------------------------------
         # Fake; stop backprop to the generator by detaching fake_B
-        if self.netD_input == "AB":
-            fake_AB = torch.cat((self.real_A, self.fake_B), 1)  # we use conditional GANs; we need to feed both input and output to the discriminator
-        elif self.netD_input == "B":
-            fake_AB = self.fake_B  if not(self.is_added_DQN)  else self.fake_B_RL  # we use conditional GANs; we need to feed output to the discriminator
+        # if self.netD_input == "AB":
+        #     fake_AB = torch.cat((self.real_A, self.fake_B), 1)  # we use conditional GANs; we need to feed both input and output to the discriminator
+        # elif self.netD_input == "B":
+        #     fake_AB = self.fake_B  if not(self.is_added_DQN)  else self.fake_B_RL  # we use conditional GANs; we need to feed output to the discriminator
         
-        pred_fake = self.netD(fake_AB.detach())
+        if self.netD_input == "AB" and not(self.is_added_DQN):
+            fake_AB = torch.cat((self.real_A, self.fake_B), 1)  # we use conditional GANs; we need to feed both input and output to the discriminator
+            action = None
+        elif self.netD_input == "B" and not(self.is_added_DQN):
+            fake_AB = self.fake_B
+            action = None
+        elif self.netD_input == "B" and self.is_added_DQN and self.netD_setting == "numerical":
+            fake_AB = self.fake_B_RL
+            action = None
+        elif self.netD_input == "B" and self.is_added_DQN and self.netD_setting == "pixelnumerical":
+            fake_AB = self.fake_B
+            action = self.fake_B_RL
+        else:
+            print("netD set wrong")
+            
+        if action == None:
+            pred_fake = self.netD(fake_AB.detach())
+        else:
+            pred_fake = self.netD(fake_AB.detach(), action.detach())
+            
+        # print("pred_fake netD output:", pred_fake.shape)
         self.loss_D_fake = self.criterionGAN(pred_fake, False)
         # ----------------------------------------------------------------------------
         # Real
-        if self.netD_input == "AB":
-            real_AB = torch.cat((self.real_A, self.real_B), 1)
-        elif self.netD_input == "B":
-            real_AB = self.real_B if not(self.is_added_DQN)  else self.real_B_RL     
+        # if self.netD_input == "AB":
+        #     real_AB = torch.cat((self.real_A, self.real_B), 1)
+        # elif self.netD_input == "B":
+        #     real_AB = self.real_B if not(self.is_added_DQN)  else self.real_B_RL     
+
+        if self.netD_input == "AB" and not(self.is_added_DQN):
+            real_AB = torch.cat((self.real_A, self.real_B), 1)  # we use conditional GANs; we need to feed both input and output to the discriminator
+            action = None
+        elif self.netD_input == "B" and not(self.is_added_DQN):
+            real_AB = self.real_B
+            action = None
+        elif self.netD_input == "B" and self.is_added_DQN and self.netD_setting == "numerical":
+            real_AB = self.real_B_RL
+            action = None
+        elif self.netD_input == "B" and self.is_added_DQN and self.netD_setting == "pixelnumerical":
+            real_AB = self.real_B
+            action = self.real_B_RL
+        else:
+            print("netD set wrong")
         
-        pred_real = self.netD(real_AB)
+        if action == None:
+            pred_real = self.netD(real_AB.detach())
+        else:
+            pred_real = self.netD(real_AB.detach(), action.detach())
+        
         self.loss_D_real = self.criterionGAN(pred_real, True)
         # combine loss and calculate gradients
         self.loss_D = (self.loss_D_fake + self.loss_D_real) * 0.5
@@ -184,12 +231,32 @@ class Pix2PixModel(BaseModel):
         # ----------------------------------------------------------------------------
         # First, G(A) should fake the discriminator
         if self.netD_existed:
-            if self.netD_input == "AB":
-                fake_AB = torch.cat((self.real_A, self.fake_B), 1)
-            elif self.netD_input == "B":
-                fake_AB = self.fake_B if not(self.is_added_DQN)  else self.fake_B_RL 
+            # if self.netD_input == "AB":
+            #     fake_AB = torch.cat((self.real_A, self.fake_B), 1)
+            # elif self.netD_input == "B":
+            #     fake_AB = self.fake_B if not(self.is_added_DQN)  else self.fake_B_RL 
+                
+            if self.netD_input == "AB" and not(self.is_added_DQN):
+                fake_AB = torch.cat((self.real_A, self.fake_B), 1)  # we use conditional GANs; we need to feed both input and output to the discriminator
+                action = None
+            elif self.netD_input == "B" and not(self.is_added_DQN):
+                fake_AB = self.fake_B
+                action = None
+            elif self.netD_input == "B" and self.is_added_DQN and self.netD_setting == "numerical":
+                fake_AB = self.fake_B_RL
+                action = None
+            elif self.netD_input == "B" and self.is_added_DQN and self.netD_setting == "pixelnumerical":
+                fake_AB = self.fake_B
+                action = self.fake_B_RL
+            else:
+                print("netD set wrong")
+                
+            if action == None:
+                pred_fake = self.netD(fake_AB)
+            else:
+                pred_fake = self.netD(fake_AB, action)  
 
-            pred_fake = self.netD(fake_AB)
+            # pred_fake = self.netD(fake_AB)
             self.loss_G_GAN = self.criterionGAN(pred_fake, True)
         # ----------------------------------------------------------------------------
         # Second, G(A) ~= B

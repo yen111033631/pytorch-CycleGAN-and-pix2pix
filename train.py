@@ -61,19 +61,9 @@ if __name__ == '__main__':
     visualizer = Visualizer(opt)   # create a visualizer that display/save images and plots
     total_iters = 0                # the total number of training iterations
 
-    summary_writer = SummaryWriter(log_dir=set_log_dir()) 
-    
-    # -------------------------------------------------------------------------------
-    # print(dataset.dataset[0]["A_paths"])
-    # print(dataset.dataset[0]["B_paths"])
-    # print(len(dataset))
-    # lens = 0
-    for i, data in enumerate(dataset):
-        print(i)
-        print(len(data))
-        if i == 0:
-            break
-    # -------------------------------------------------------------------------------
+    if opt.is_save:
+        summary_writer = SummaryWriter(log_dir=set_log_dir()) 
+        print("save SummaryWriter")
 
     for epoch in range(opt.epoch_count, opt.n_epochs + opt.n_epochs_decay + 1):    # outer loop for different epochs; we save the model by <epoch_count>, <epoch_count>+<save_latest_freq>
         epoch_start_time = time.time()  # timer for entire epoch
@@ -103,8 +93,9 @@ if __name__ == '__main__':
                 visualizer.print_current_losses(epoch, epoch_iter, losses, t_comp, t_data)
                 if opt.display_id > 0:
                     visualizer.plot_current_losses(epoch, float(epoch_iter) / dataset_size, losses)
-                for key in losses.keys():
-                    summary_writer.add_scalar(key, losses[key], total_iters)
+                if opt.is_save:
+                    for key in losses.keys():
+                        summary_writer.add_scalar(key, losses[key], total_iters)
 
             if total_iters % opt.save_latest_freq == 0:   # cache our latest model every <save_latest_freq> iterations
                 print('saving the latest model (epoch %d, total_iters %d)' % (epoch, total_iters))
