@@ -133,7 +133,17 @@ class Pix2PixModel(BaseModel):
         
         # 創建L1損失函數的實例並計算損失
         l1_loss = torch.nn.L1Loss()
-        loss = l1_loss(fake_B_tensor, real_B_tensor)
+        
+        # --
+        cos_sim = F.cosine_similarity(fake_B_tensor, real_B_tensor, dim=-1)
+        loss = (1 - cos_sim.mean()) * 500
+        
+        
+        
+        # loss = l1_loss(fake_B_tensor, real_B_tensor)
+        # --
+        
+        
         real_B_action = real_B_tensor.argmax(1)[0].item()
         fake_B_action = fake_B_tensor.argmax(1)[0].item()
         is_same = real_B_action == fake_B_action
