@@ -7,6 +7,7 @@ import cv2
 # import .read_DQN
 from .read_DQN import set_up_agent, get_q_values
 import util.util as util
+import ipdb
 
 class Pix2PixModel(BaseModel):
     """ This class implements the pix2pix model, for learning a mapping from input images to output images given paired data.
@@ -164,10 +165,12 @@ class Pix2PixModel(BaseModel):
 
             self.fake_B_RL = self.fake_B / 2.0 + 0.5
             self.fake_B_RL = self.agent.DQN(self.fake_B_RL)
+            self.fake_B_RL_nor = (self.fake_B_RL + 250) / 250 * 100
             # self.fake_B_RL = self.fake_B_RL / 100
 
             self.real_B_RL = self.real_B / 2.0 + 0.5
             self.real_B_RL = self.agent.DQN(self.real_B_RL)
+            self.real_B_RL_nor = (self.real_B_RL + 250) / 250 * 100
             # self.real_B_RL = self.real_B_RL / 100
         # ----------------------------------------------------------------------------
         
@@ -271,10 +274,22 @@ class Pix2PixModel(BaseModel):
         # ----------------------------------------------------------------------------
         # Second, G(A) ~= B
         if self.is_added_DQN:
-            self.loss_G_L1_RL = self.criterionL1(self.fake_B_RL, self.real_B_RL)
+            # self.loss_G_L1_RL = self.criterionL1(self.fake_B_RL, self.real_B_RL)
+            # self.loss_G_L1_RL_nor = self.criterionL1(self.fake_B_RL_nor, self.real_B_RL_nor)
             
             cos_sim = F.cosine_similarity(self.fake_B_RL, self.real_B_RL, dim=-1)
+            cos_sim_nor = F.cosine_similarity(self.fake_B_RL_nor, self.real_B_RL_nor, dim=-1)
+            # print("fake_B_RL", self.fake_B_RL.cpu().detach().numpy())
+            # print("real_B_RL", self.real_B_RL.cpu().detach().numpy())
+            # print("loss_G_L1_RL", self.loss_G_L1_RL.item())
+            # print("loss_G_L1_RL_nor", self.loss_G_L1_RL_nor.item())
+            # print("cos_sim", (1 - cos_sim.item()))
+            # print("cos_sim_nor", (1 - cos_sim_nor.item()))
+            # print("---")
+            # ipdb.set_trace()
+            
             self.loss_G_cos_RL = (1 - cos_sim.mean()) * 500
+            self.loss_G_L1_RL = (1 - cos_sim_nor.mean()) * 500
             
         self.loss_G_L1 = self.criterionL1(self.fake_B, self.real_B) * self.opt.lambda_L1
         # ----------------------------------------------------------------------------
