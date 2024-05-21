@@ -198,6 +198,10 @@ class Pix2PixModel(BaseModel):
             action = self.fake_B_RL
         else:
             print("netD set wrong")
+            print("self.netD_input", self.netD_input)
+            print("self.is_added_DQN", self.is_added_DQN)
+            print("self.netD_setting", self.netD_setting)
+            
             
         if action == None:
             pred_fake = self.netD(fake_AB.detach())
@@ -274,22 +278,14 @@ class Pix2PixModel(BaseModel):
         # ----------------------------------------------------------------------------
         # Second, G(A) ~= B
         if self.is_added_DQN:
-            # self.loss_G_L1_RL = self.criterionL1(self.fake_B_RL, self.real_B_RL)
-            # self.loss_G_L1_RL_nor = self.criterionL1(self.fake_B_RL_nor, self.real_B_RL_nor)
+            self.loss_G_L1_RL = self.criterionL1(self.fake_B_RL, self.real_B_RL)
+            self.loss_G_L1_RL_nor = self.criterionL1(self.fake_B_RL_nor, self.real_B_RL_nor)
             
-            cos_sim = F.cosine_similarity(self.fake_B_RL, self.real_B_RL, dim=-1)
-            cos_sim_nor = F.cosine_similarity(self.fake_B_RL_nor, self.real_B_RL_nor, dim=-1)
-            # print("fake_B_RL", self.fake_B_RL.cpu().detach().numpy())
-            # print("real_B_RL", self.real_B_RL.cpu().detach().numpy())
-            # print("loss_G_L1_RL", self.loss_G_L1_RL.item())
-            # print("loss_G_L1_RL_nor", self.loss_G_L1_RL_nor.item())
-            # print("cos_sim", (1 - cos_sim.item()))
-            # print("cos_sim_nor", (1 - cos_sim_nor.item()))
-            # print("---")
-            # ipdb.set_trace()
-            
+            cos_sim = F.cosine_similarity(self.fake_B_RL, self.real_B_RL, dim=-1)            
             self.loss_G_cos_RL = (1 - cos_sim.mean()) * 500
-            self.loss_G_L1_RL = (1 - cos_sim_nor.mean()) * 500
+
+            cos_sim_nor = F.cosine_similarity(self.fake_B_RL_nor, self.real_B_RL_nor, dim=-1)            
+            self.loss_G_cos_RL_nor = (1 - cos_sim_nor.mean()) * 500
             
         self.loss_G_L1 = self.criterionL1(self.fake_B, self.real_B) * self.opt.lambda_L1
         # ----------------------------------------------------------------------------
