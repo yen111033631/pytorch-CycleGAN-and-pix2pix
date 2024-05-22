@@ -95,7 +95,7 @@ if __name__ == '__main__':
             print('processing (%04d)-th image... %s' % (i, img_path))
         save_images(webpage, visuals, img_path, aspect_ratio=opt.aspect_ratio, width=opt.display_winsize, use_wandb=opt.use_wandb)
     
-    save_txt(opt, model.losses_list, model.same_list)
+    # save_txt(opt, model.losses_list, model.same_list)
     # print(model.losses_list)
     # print(model.same_list)
     print("--------------------------------------")
@@ -104,7 +104,7 @@ if __name__ == '__main__':
           "loss max:  \t", np.max(model.losses_list), "\n"
           "loss min:  \t", np.min(model.losses_list), "\n"
           "loss lens: \t", len(model.losses_list), "\n"
-          "success rate:\t", np.mean(model.same_list)
+        #   "success rate:\t", np.mean(model.same_list)
           )
     print("--------------------------------------")
     webpage.save()  # save the HTML

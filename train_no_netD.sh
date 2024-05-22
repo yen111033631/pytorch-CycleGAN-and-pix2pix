@@ -5,10 +5,10 @@
 n_epochs=150
 
 model_name_list=( \
-                 "pix2pix_arm_84_DQN1_netD0_netGloss_GAN_RLL1" \
-                 "pix2pix_arm_84_DQN1_netD0_netGloss_GAN_RLL1_nor" \
-                 "pix2pix_arm_84_DQN1_netD0_netGloss_GAN_RLcos" \
-                 "pix2pix_arm_84_DQN1_netD0_netGloss_GAN_RLcos_nor" \
+                 "pix2pix_arm_84_DQN1_netD0_netGloss_GAN_RLL1_wgan" \
+                 "pix2pix_arm_84_DQN1_netD0_netGloss_GAN_RLL1_nor_wgan" \
+                 "pix2pix_arm_84_DQN1_netD0_netGloss_GAN_RLcos_wgan" \
+                 "pix2pix_arm_84_DQN1_netD0_netGloss_GAN_RLcos_nor_wgan" \
                  )
                 
 netG_loss_list=( \
@@ -42,7 +42,7 @@ for (( i = 1; i <= ${#model_name_list[@]}; i++ )); do
                     --netG_loss_setting "${netG_loss_list[$i]}" \
                     --n_epochs ${n_epochs} \
                     --n_epochs_decay ${n_epochs} \
-                    --gan_mode "lsgan"
+                    --gan_mode "wgangp"
 done
 
 # # ----------------------------------

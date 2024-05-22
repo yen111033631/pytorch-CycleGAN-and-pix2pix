@@ -8,7 +8,7 @@ import os
 from tqdm import tqdm
 
 class Env:
-    def __init__(self):
+    def __init__(self, image_size=84):
         self.seed = 525
         self.seed = 525
         
@@ -16,13 +16,27 @@ class Env:
         self.action_space = spaces.Discrete(6)
         self.observation_space = spaces.Box(low=0, 
                                             high=255,
-                                            shape=(channel_n, 84, 84), 
+                                            shape=(channel_n, image_size, image_size), 
                                             dtype=np.uint8)
         
-def set_up_agent(model_dir = "./checkpoints/DQN_gray/Apr15_H17_M58_S28_cube_gray_neaf2080_002/good_model_state_dict.pt"):
-    env = Env()
+def set_up_agent(image_size=84):
+    
+    if image_size == 84:
+        model_dir = "./RL_model/DQN_gray/Apr15_H17_M58_S28_cube_gray_neaf2080_002/good_model_state_dict.pt"
+    elif image_size == 256:
+        model_dir = "./RL_model/DQN_gray_256/May20_H22_M33_S14_cube_gray_neaf-3090_001/good_model_state_dict.pt"
+        # model_dir = "./RL_model/DQN_gray_256/May20_H22_M33_S14_cube_gray_neaf-3090_001/good_model.pt"
+    else:
+        print("image_size must be 84 or 256")
+        exit()
+    env = Env(image_size)
+    
+    print("image_size", type(image_size))
 
-    agent = DQNAgent(env=env)     
+    agent = DQNAgent(env=env)  
+    
+    print(agent.DQN)
+       
     agent.DQN.load_state_dict(torch.load(model_dir))
     
     agent.DQN.requires_grad_(False)

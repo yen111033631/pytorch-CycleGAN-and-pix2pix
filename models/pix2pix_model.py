@@ -70,7 +70,7 @@ class Pix2PixModel(BaseModel):
         # ------------------------------------------------------------------
         # DQN model 
         self.is_added_DQN = opt.is_added_DQN
-        self.agent = set_up_agent()
+        self.agent = set_up_agent(opt.crop_size)
         # opt.netD = "numerical" if self.is_added_DQN else opt.netD
         # ------------------------------------------------------------------
         # define networks (both generator and discriminator)
@@ -141,21 +141,24 @@ class Pix2PixModel(BaseModel):
         
         
         
-        # loss = l1_loss(fake_B_tensor, real_B_tensor)
+        loss_l1 = l1_loss(fake_B_tensor, real_B_tensor)
         # --
+        print(round(loss.item(), 2), round(loss_l1.item(), 2))
+        print("-")
         
         
-        real_B_action = real_B_tensor.argmax(1)[0].item()
-        fake_B_action = fake_B_tensor.argmax(1)[0].item()
-        is_same = real_B_action == fake_B_action
-        print("fake_B_tensor", np.round(fake_B_tensor.cpu().numpy(), 2))
-        print("real_B_tensor", np.round(real_B_tensor.cpu().numpy(), 2))
-        print(real_B_action, fake_B_action, is_same, loss.item())
-        print("---")
-        # print(loss)
+        
+        # real_B_action = real_B_tensor.argmax(1)[0].item()
+        # fake_B_action = fake_B_tensor.argmax(1)[0].item()
+        # is_same = real_B_action == fake_B_action
+        # print("real_B_tensor", np.round(real_B_tensor.cpu().numpy(), 2))
+        # print("fake_B_tensor", np.round(fake_B_tensor.cpu().numpy(), 2))
+        # print(real_B_action, fake_B_action, is_same, round(loss.item(), 2), round(loss_l1.item(), 2))
+        # print("---")
+        # # print(loss)
         
         self.losses_list.append(loss.item())
-        self.same_list.append(is_same)
+        # self.same_list.append(is_same)
         
     def input_RL_model(self):
         # ----------------------------------------------------------------------------
