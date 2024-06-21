@@ -131,7 +131,7 @@ class DQNAgent:
         self.LEARNING_START = LEARNING_START        
         # ----------------------------
         
-        state_channel = env.observation_space.shape[0]
+        state_channel = env.observation_space.shape[-1]
         
         self.epsilon = epsilon
         self.steps_done = 0

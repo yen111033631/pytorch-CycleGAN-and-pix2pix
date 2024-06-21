@@ -84,7 +84,10 @@ class Pix2PixModel(BaseModel):
             elif self.netD_input == "B":
                 netD_input_nc = opt.output_nc
             self.netD = networks.define_D(netD_input_nc, opt.ndf, opt.netD,
-                                          opt.n_layers_D, opt.norm, opt.init_type, opt.init_gain, self.gpu_ids)
+                                          opt.n_layers_D, opt.norm, opt.init_type, opt.init_gain, self.gpu_ids,
+                                          n_actions=self.agent.action_space.n)
+            
+            print("action space", self.agent.action_space.n)
 
         if self.isTrain:
             # define loss functions

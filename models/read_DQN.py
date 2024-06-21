@@ -1,4 +1,4 @@
-from .DQN_Atari import DQNAgent
+
 from gymnasium import spaces
 import numpy as np
 import torch
@@ -13,35 +13,38 @@ class Env:
         self.seed = 525
         
         channel_n = 1
-        self.action_space = spaces.Discrete(6)
+        if image_size == 256:
+            action_n = 78
+        elif image_size == 84:
+            action_n = 6
+        self.action_space = spaces.Discrete(action_n)
         self.observation_space = spaces.Box(low=0, 
                                             high=255,
-                                            shape=(channel_n, image_size, image_size), 
+                                            shape=(image_size, image_size, channel_n), 
                                             dtype=np.uint8)
         
 def set_up_agent(image_size=84):
     
     if image_size == 84:
+        from .DQN_Atari import DQNAgent
         model_dir = "./RL_model/DQN_gray/Apr15_H17_M58_S28_cube_gray_neaf2080_002/good_model_state_dict.pt"
     elif image_size == 256:
+        from .DQN_Atari_256 import DQNAgent
         model_dir = "./RL_model/DQN_gray_256/May20_H22_M33_S14_cube_gray_neaf-3090_001/good_model_state_dict.pt"
-        # model_dir = "./RL_model/DQN_gray_256/May20_H22_M33_S14_cube_gray_neaf-3090_001/good_model.pt"
     else:
         print("image_size must be 84 or 256")
         exit()
+    
+    # ----------------------------
+    # env 
     env = Env(image_size)
-    
-    print("image_size", type(image_size))
-
-    agent = DQNAgent(env=env)  
-    
-    print(agent.DQN)
-       
-    agent.DQN.load_state_dict(torch.load(model_dir))
-    
+    # ----------------------------
+    # agent
+    agent = DQNAgent(env=env)       
+    agent.DQN.load_state_dict(torch.load(model_dir))    
     agent.DQN.requires_grad_(False)
-    
     # agent.DQN.eval()
+    # ----------------------------
     
     return agent
 

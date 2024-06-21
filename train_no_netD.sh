@@ -5,10 +5,14 @@
 n_epochs=150
 
 model_name_list=( \
-                 "pix2pix_arm_84_DQN1_netD0_netGloss_GAN_RLL1_wgan" \
-                 "pix2pix_arm_84_DQN1_netD0_netGloss_GAN_RLL1_nor_wgan" \
-                 "pix2pix_arm_84_DQN1_netD0_netGloss_GAN_RLcos_wgan" \
-                 "pix2pix_arm_84_DQN1_netD0_netGloss_GAN_RLcos_nor_wgan" \
+                 "pix2pix_arm_256_DQN1_netD0_netGloss_GAN_RLL1" \
+                 "pix2pix_arm_256_DQN1_netD0_netGloss_GAN_RLL1_nor" \
+                 "pix2pix_arm_256_DQN1_netD0_netGloss_GAN_RLcos" \
+                 "pix2pix_arm_256_DQN1_netD0_netGloss_GAN_RLcos_nor" \
+                 "pix2pix_arm_256_DQN1_netD0_netGloss_GAN_RLL1_wgan" \
+                 "pix2pix_arm_256_DQN1_netD0_netGloss_GAN_RLL1_nor_wgan" \
+                 "pix2pix_arm_256_DQN1_netD0_netGloss_GAN_RLcos_wgan" \
+                 "pix2pix_arm_256_DQN1_netD0_netGloss_GAN_RLcos_nor_wgan" \
                  )
                 
 netG_loss_list=( \
@@ -16,22 +20,30 @@ netG_loss_list=( \
                 "G_L1_RL_nor" \
                 "G_cos_RL" \
                 "G_cos_RL_nor" \
+                "G_L1_RL" \
+                "G_L1_RL_nor" \
+                "G_cos_RL" \
+                "G_cos_RL_nor" \
                 )
 
-# gan_mode_list=( \
-#             #    "lsgan" \
-#                "lsgan" \
-#             #    "wgangp" \
-#                "wgangp" \
-#                )              
+gan_mode_list=( \
+               "lsgan" \
+               "lsgan" \
+               "lsgan" \
+               "lsgan" \
+               "wgangp" \
+               "wgangp" \
+               "wgangp" \
+               "wgangp" \
+               )              
 
 for (( i = 1; i <= ${#model_name_list[@]}; i++ )); do
-    python train.py --dataroot ./Robotic_arm_image_84/RS \
+    python train.py --dataroot ./Robotic_arm_image_256/RS \
                     --model pix2pix \
                     --direction AtoB \
                     --netG resnet_9blocks \
-                    --crop_size 84 \
-                    --load_size 84 \
+                    --crop_size 256 \
+                    --load_size 256 \
                     --input_nc 1 \
                     --output_nc 1 \
                     --name "${model_name_list[$i]}" \
