@@ -17,60 +17,23 @@
 
 # ----------------------------------
 model_name_list=( \
-                 "pix2pix_arm_84_DQN0_netD1_origin" \
-                #  "pix2pix_arm_84_DQN1_netD1_netGloss_GAN_L1" \
-                #  "pix2pix_arm_84_DQN0_netD1_origin_wgan" \
-                 "pix2pix_arm_84_DQN1_netD1_netGloss_GAN_L1_wgan" \
-
-
-                #  "pix2pix_arm_84_DQN1_netD0_netGloss_GAN_RLL1" \
-                #  "pix2pix_arm_84_DQN1_netD0_netGloss_GAN_RLL1_nor" \
-                #  "pix2pix_arm_84_DQN1_netD0_netGloss_GAN_RLcos" \
-                #  "pix2pix_arm_84_DQN1_netD0_netGloss_GAN_RLcos_nor"         
-
-
-
-
-                #  "pix2pix_arm_84_DQN1_netD0_netGloss_RLcos" \
-
-                #  "pix2pix_arm_84_origin_netD_input_AB" \
-                #  "pix2pix_arm_84_origin_netD_input_B" \
-                #  "pix2pix_arm_84_DQN1_netD1_netGloss_GAN_L1" \
-                #  "pix2pix_arm_84_DQN1_netD1_netGloss_GAN_L1_RLL1" \
-                #  "pix2pix_arm_84_DQN1_netD0_netGloss_RLL1" \
-                #  "pix2pix_arm_84_DQN1_netD0_netGloss_L1_RLL1" \
-                #  "pix2pix_arm_84_DQN1_netDPN_netGloss_GAN_L1" \
-                #  "pix2pix_arm_84_DQN1_netDPN_netGloss_GAN_L1_RLL1" \`
-                #  "pix2pix_arm_84_DQN1_netD1_netGloss_GAN_RLL1" \
+                 "S2R_256_DQN0_netD1_origin" \
+                 "S2R_256_DQN1_netD1_netGloss_GAN_L1" \
+                 "S2R_256_DQN0_netD1_origin_wgan" \
+                 "S2R_256_DQN1_netD1_netGloss_GAN_L1_wgan" \
                  )
 # ----------------------------------
 # add DQN, netG_loss_setting "G_GAN+G_L1"
 for model_name in $model_name_list
-do 
-    # python test_RL.py --dataroot ./Robotic_arm_image_84/RS \
-    #                 --model pix2pix \
-    #                 --direction AtoB \
-    #                 --netG resnet_9blocks \
-    #                 --crop_size 84 \
-    #                 --load_size 84 \
-    #                 --input_nc 1 \
-    #                 --output_nc 1 \
-    #                 --name "${model_name}" \
-    #                 --is_added_DQN 0 
-    python test_RL.py --dataroot ./Robotic_arm_image_84/RS \
+do  
+    python test_RL.py --dataroot /home/yen/mount/nas/111/111033631_Yen/ARM/GAN_images/all \
                     --model pix2pix \
                     --direction AtoB \
                     --netG resnet_9blocks \
-                    --crop_size 84 \
-                    --load_size 84 \
+                    --crop_size 256 \
+                    --load_size 256 \
                     --input_nc 1 \
                     --output_nc 1 \
                     --name "${model_name}" \
-                    --is_added_DQN 0 
+                    --is_added_DQN 1 
 done                    
-
-                #   --name pix2pix_arm_84_origin_netD_input_B \
-                #   --name pix2pix_arm_84_DQN1_netD1_netGloss_GAN_L1 \
-                # --name pix2pix_arm_84_DQN1_netD1_netGloss_GAN_L1_RLL1 \
-                # --name pix2pix_arm_84_DQN1_netD0_netGloss_RLL1 \
-                # --name pix2pix_arm_84_DQN1_netD0_netGloss_L1_RLL1 \

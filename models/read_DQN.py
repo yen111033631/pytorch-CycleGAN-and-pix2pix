@@ -30,7 +30,7 @@ def set_up_agent(image_size=84):
         model_dir = "./RL_model/DQN_gray/Apr15_H17_M58_S28_cube_gray_neaf2080_002/good_model_state_dict.pt"
     elif image_size == 256:
         from .DQN_Atari_256 import DQNAgent
-        model_dir = "./RL_model/DQN_gray_256/May20_H22_M33_S14_cube_gray_neaf-3090_001/good_model_state_dict.pt"
+        model_dir = "./RL_model/DQN_gray_256/Jun16_H04_M34_S56_cube_gray_neaf-3090_007/good_model_state_dict.pt"
     else:
         print("image_size must be 84 or 256")
         exit()

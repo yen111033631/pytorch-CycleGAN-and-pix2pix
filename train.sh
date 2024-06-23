@@ -5,10 +5,10 @@
 n_epochs=150
 
 model_name_list=( \
-                 "new_data_0620_DQN0_netD1_origin" \
-                 "new_data_0620_DQN1_netD1_netGloss_GAN_L1" \
-                 "new_data_0620_DQN0_netD1_origin_wgan" \
-                 "new_data_0620_DQN1_netD1_netGloss_GAN_L1_wgan" \
+                 "S2R_256_DQN0_netD1_origin" \
+                 "S2R_256_DQN1_netD1_netGloss_GAN_L1" \
+                 "S2R_256_DQN0_netD1_origin_wgan" \
+                 "S2R_256_DQN1_netD1_netGloss_GAN_L1_wgan" \
                  )
 
 is_added_DQN_list=(\
@@ -48,7 +48,7 @@ gan_mode_list=( \
                )              
 
 for (( i = 1; i <= ${#model_name_list[@]}; i++ )); do
-    python train.py --dataroot /home/yen/mount/nas/111/111033631_Yen/ARM/GAN_images/_010_010_shuffle_False \
+    python train.py --dataroot /home/yen/mount/nas/111/111033631_Yen/ARM/GAN_images/all \
                     --model pix2pix \
                     --direction AtoB \
                     --netG resnet_9blocks \
@@ -65,6 +65,18 @@ for (( i = 1; i <= ${#model_name_list[@]}; i++ )); do
                     --n_epochs ${n_epochs} \
                     --n_epochs_decay ${n_epochs} \
                     --gan_mode "${gan_mode_list[$i]}"
+
+    
+    python test_RL.py --dataroot /home/yen/mount/nas/111/111033631_Yen/ARM/GAN_images/all \
+                      --model pix2pix \
+                      --direction AtoB \
+                      --netG resnet_9blocks \
+                      --crop_size 256 \
+                      --load_size 256 \
+                      --input_nc 1 \
+                      --output_nc 1 \
+                      --name "${model_name_list[$i]}" \
+                      --is_added_DQN 1 
 done
 
 
