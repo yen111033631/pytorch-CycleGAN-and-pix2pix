@@ -7,7 +7,53 @@ import cv2
 # import .read_DQN
 from .read_DQN import set_up_agent, get_q_values
 import util.util as util
-import ipdb
+import ipdb, math
+
+def spread_index_into_spherical(index, theta_num=8, shell_unit_length="exp", step_first=0.01, step_second=0.05):
+    def special_exp(x, x1=0.01, x2=0.05):
+        a = (x2 - x1) / (math.exp(1) - 1)
+        b = 1
+        c = x1 - a
+        return a * math.exp(x-b) + c
+    
+    theta_unit_length = 360 / theta_num
+    
+    phi_num = theta_num / 2 - 1
+    point_num = theta_num * phi_num + 2
+
+    i = index
+    r = i // point_num + 1
+    index = i % point_num
+    p = index % theta_num + 1
+    t = index // theta_num + 1
+    
+    if index >= theta_num * phi_num:
+        p = 0
+        t = 0 if index == theta_num * phi_num else phi_num + 1
+    
+    p *= theta_unit_length
+    t *= theta_unit_length
+    if shell_unit_length == "exp":
+        r = special_exp(r, step_first, step_second)
+        
+    elif isinstance(shell_unit_length, float):
+        r *= shell_unit_length
+    
+    return r, t, p
+
+# 定義球座標系轉換函數
+def spherical_to_cartesian(radius, theta, phi):
+    t2r = np.pi / 180
+    theta *= t2r
+    phi *= t2r
+    x = radius * np.sin(theta) * np.cos(phi)
+    y = radius * np.sin(theta) * np.sin(phi)
+    z = radius * np.cos(theta)
+    
+    dis = np.asarray([x, y, z])
+    return dis
+
+
 
 class Pix2PixModel(BaseModel):
     """ This class implements the pix2pix model, for learning a mapping from input images to output images given paired data.
@@ -105,7 +151,7 @@ class Pix2PixModel(BaseModel):
         # # ------------------
         # print(self.netD)
         # # ------------------
-            
+        self.image_tensor_size = torch.Size([opt.input_nc, opt.crop_size, opt.crop_size])
 
     def set_input(self, input):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
@@ -326,3 +372,21 @@ class Pix2PixModel(BaseModel):
         self.backward_G()                   # calculate graidents for G
         self.optimizer_G.step()             # update G's weights
         # ----------------------------------------------------------------------------
+    
+    def S2R_displacement(self, image_tensor: torch.Tensor):
+        assert isinstance(image_tensor, torch.Tensor), "image_tensor should be torch.Tensor"
+        assert image_tensor.shape[1:] == self.image_tensor_size, "image_tensor should be {}".format(self.image_tensor_size)
+        
+        with torch.no_grad():
+            fake_B = self.netG(image_tensor)
+            fake_B_RL = fake_B / 2.0 + 0.5
+            fake_B_RL = self.agent.DQN(fake_B_RL) 
+        
+        action = fake_B_RL.argmax(1)[0].item()
+        r, t, p = spread_index_into_spherical(action, 
+                                              theta_num=8, 
+                                              shell_unit_length=0.025)
+        displacement = spherical_to_cartesian(r, t, p)
+        
+        # return displacement
+        return fake_B_RL

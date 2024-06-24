@@ -110,23 +110,37 @@ if __name__ == '__main__':
     model.setup(opt)               # regular setup: load and print networks; create schedulers
     
     # =======================================================================================
-    image_path = "/home/yen/mount/nas/111/111033631_Yen/ARM/GAN_images/all/test/img_0804.jpg"
-    image = cv2.imread(image_path, 0)
+    # image_path = "/home/yen/mount/nas/111/111033631_Yen/ARM/GAN_images/all/test/img_0804.jpg"
+    # image = cv2.imread(image_path, 0)
 
-    a, b = split_image(image)
+    # # a, b = split_image(image)
     
     # a, b = read_from_PIL(image_path)
-    transform = get_transform()
-    a_tensor = transform(a)
+    # transform = get_transform()
+    # a_tensor = transform(a)
     
-    with torch.no_grad():
-        model.eval()
-        fake_B = model.netG(a_tensor)
-        # print(fake_B[0, 0, 56, :10])
+    # with torch.no_grad():
+    #     model.eval()
+    #     fake_B = model.netG(a_tensor)
+    #     # print(fake_B[0, 0, 56, :10])
         
-        fake_B_RL = fake_B / 2.0 + 0.5
-        fake_B_RL = model.agent.DQN(fake_B_RL)    
-        print(fake_B_RL[0, :10])
+    #     fake_B_RL = fake_B / 2.0 + 0.5
+    #     fake_B_RL = model.agent.DQN(fake_B_RL)    
+    #     action = fake_B_RL.argmax(1)[0].item()
+    #     # print(fake_B_RL[0, :10])
+    #     # print("-")
+    #     # print("aciton", action)
+    #     # print("-")
+    
+    
+    # r, t, p = spread_index_into_spherical(action, 
+    #                                         theta_num=8, 
+    #                                         shell_unit_length=0.025)
+    # displacement = spherical_to_cartesian(r, t, p)
+    # print(displacement)  
+    
+    # displacement = model.S2R_displacement(a_tensor)  
+    # print(displacement)  
     
     # =======================================================================================
     
@@ -150,58 +164,22 @@ if __name__ == '__main__':
         model.eval()
     for i, data in enumerate(dataset):
         # if i >= opt.num_test:  # only apply our model to opt.num_test images.
-        if i >= 1:  # only apply our model to opt.num_test images.
+        if i >= 10:  # only apply our model to opt.num_test images.
             break
         model.set_input(data)  # unpack data from data loader
         model.test()           # run inference
         
         # =======================================================================================
+        # 比較兩個模型的結果
+        fake_B_1 = model.fake_B_RL
+        fake_B_2 = model.S2R_displacement(data["A"])
         
-        # --------------------------------------------
-        # # a_tensor comparison
-        # allclose = torch.equal(data["A"], a_tensor)
-        # print("-")
-        # print("allclose", allclose)
-        # print("-")
-        # --------------------------------------------
-        # a_tensor comparison
-        # --------------------------------------------
-        # comparison_result = torch.eq(model.fake_B, fake_B)
-        with torch.no_grad():
-            model.eval()
-            # fake_B_1 = model.netG(a_tensor)
-            # fake_B_1 = model.fake_B
-            fake_B_1 = model.fake_B_RL
-            print(fake_B_1[0, :10])
-            
-        with torch.no_grad():
-            model.eval()
-            # fake_B_2 = model.netG(data["A"])
-            # fake_B_2 = fake_B
-            fake_B_2 = fake_B_RL
-            
-            comparison_result = torch.eq(fake_B_1, fake_B_2)
-            
-            allclose = torch.allclose(fake_B_1, fake_B_2)
-            print("-")
-            print("allclose", allclose)
-            print("-")
+        comparison_result = torch.eq(fake_B_1, fake_B_2)
         
-        # 找到等於 False 的位置
-        false_positions = torch.nonzero(~comparison_result)
-
-        # 計算 False 的數量
-        num_false = (~comparison_result).sum()
-
-        print("比較結果:")
-        print(comparison_result)
-
-        # print("\n等於 False 的位置:")
-        # print(false_positions)
-
-        print("\nFalse 的數量:")
-        print(num_false)
-        
+        allclose = torch.allclose(fake_B_1, fake_B_2)
+        print("-")
+        print("allclose", allclose)
+        print("-")       
         
         # =======================================================================================
         
