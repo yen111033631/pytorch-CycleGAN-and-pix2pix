@@ -119,6 +119,11 @@ class Pix2PixModel(BaseModel):
         self.real_A = input['A' if AtoB else 'B'].to(self.device)
         self.real_B = input['B' if AtoB else 'A'].to(self.device)
         self.image_paths = input['A_paths' if AtoB else 'B_paths']
+        
+        # # ========================================
+        # print(self.real_A.shape)
+        # print(self.real_A[0, 0, 56, :10])
+        # # ========================================
 
     def forward(self):
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""
@@ -306,7 +311,7 @@ class Pix2PixModel(BaseModel):
 
     def optimize_parameters(self):
         self.forward()                   # compute fake images: G(A)
-        self.input_RL_model()            # RL(G(A)) and RL(B)
+        # self.input_RL_model()            # RL(G(A)) and RL(B)
         # ----------------------------------------------------------------------------
         # update D
         if self.netD_existed:

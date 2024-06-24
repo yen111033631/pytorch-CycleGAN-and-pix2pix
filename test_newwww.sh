@@ -17,7 +17,7 @@
 
 # ----------------------------------
 model_name_list=( \
-                 "new_data_0620_DQN0_netD1_origin" \
+                 "S2R_256_DQN1_netD1_G_GAN_G_L1_G_L1_RL_for_testttt" \
                 #  "pix2pix_arm_84_DQN1_netD1_netGloss_GAN_L1" \
                 #  "pix2pix_arm_84_DQN0_netD1_origin_wgan" \
                 #  "pix2pix_arm_84_DQN1_netD1_netGloss_GAN_L1_wgan" \
@@ -47,12 +47,13 @@ model_name_list=( \
 # add DQN, netG_loss_setting "G_GAN+G_L1"
 for model_name in $model_name_list
 do 
-    python test_RL_newwww.py --dataroot ./Robotic_arm_image_256/RS \
+    python test_RL_newwww.py --dataroot /home/yen/mount/nas/111/111033631_Yen/ARM/GAN_images/all \
                     --model pix2pix \
                     --direction AtoB \
                     --netG resnet_9blocks \
                     --crop_size 256 \
                     --load_size 256 \
+                    --num_test 500 \
                     --input_nc 1 \
                     --output_nc 1 \
                     --name "${model_name}" \

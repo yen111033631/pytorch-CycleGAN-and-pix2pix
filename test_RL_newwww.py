@@ -33,11 +33,28 @@ from models import create_model
 from util.visualizer import save_images
 from util import html
 import numpy as np
+from torchvision import transforms
+import cv2, torch
+from PIL import Image
 
 try:
     import wandb
 except ImportError:
     print('Warning: wandb package cannot be found. The option "--use_wandb" will result in error.')
+
+# ------------------------------------------------------------------
+# random seed 
+def setup_seed(seed):
+    # random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.benchmark = True
+    torch.backends.cudnn.deterministic = True
+
+setup_seed(525)
+# ------------------------------------------------------------------
 
 
 def save_txt(opt, losses_list, same_list):
@@ -53,7 +70,32 @@ def save_txt(opt, losses_list, same_list):
         txt_file.write(f"success rate: \t{np.mean(same_list)}\n")
         txt_file.write(f"loss lens: \t\t{len(losses_list)}\n")
         txt_file.write("--------------------------------------\n")
-    
+
+# ----------------------------------------------------------------------------
+def split_image(image):
+    # image = cv2.imread(image_path, 0)
+    a = image[:, :image.shape[0]]
+    b = image[:, image.shape[0]:]
+    return a, b
+
+def read_from_PIL(image_path):
+    AB = Image.open(image_path).convert('L')
+    # # split AB image into A and B
+    w, h = AB.size
+    w2 = int(w / 2)
+    A = AB.crop((0, 0, w2, h))
+    B = AB.crop((w2, 0, w, h))
+    return A, B
+
+def get_transform():
+    # 定義變換管道
+    transform = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.5], std=[0.5]),
+        transforms.Lambda(lambda x: x.unsqueeze(0)),
+    ])
+    return transform  
+# ----------------------------------------------------------------------------
 
 if __name__ == '__main__':
     opt = TestOptions().parse()  # get test options
@@ -67,39 +109,115 @@ if __name__ == '__main__':
     model = create_model(opt)      # create a model given opt.model and other options
     model.setup(opt)               # regular setup: load and print networks; create schedulers
     
+    # =======================================================================================
+    image_path = "/home/yen/mount/nas/111/111033631_Yen/ARM/GAN_images/all/test/img_0804.jpg"
+    image = cv2.imread(image_path, 0)
+
+    a, b = split_image(image)
+    
+    # a, b = read_from_PIL(image_path)
+    transform = get_transform()
+    a_tensor = transform(a)
+    
+    with torch.no_grad():
+        model.eval()
+        fake_B = model.netG(a_tensor)
+        # print(fake_B[0, 0, 56, :10])
+        
+        fake_B_RL = fake_B / 2.0 + 0.5
+        fake_B_RL = model.agent.DQN(fake_B_RL)    
+        print(fake_B_RL[0, :10])
+    
+    # =======================================================================================
+    
     
 
-    # # initialize logger
-    # if opt.use_wandb:
-    #     wandb_run = wandb.init(project=opt.wandb_project_name, name=opt.name, config=opt) if not wandb.run else wandb.run
-    #     wandb_run._label(repo='CycleGAN-and-pix2pix')
+    # initialize logger
+    if opt.use_wandb:
+        wandb_run = wandb.init(project=opt.wandb_project_name, name=opt.name, config=opt) if not wandb.run else wandb.run
+        wandb_run._label(repo='CycleGAN-and-pix2pix')
 
-    # # create a website
-    # web_dir = os.path.join(opt.results_dir, opt.name, '{}_{}'.format(opt.phase, opt.epoch))  # define the website directory
-    # if opt.load_iter > 0:  # load_iter is 0 by default
-    #     web_dir = '{:s}_iter{:d}'.format(web_dir, opt.load_iter)
-    # print('creating web directory', web_dir)
-    # webpage = html.HTML(web_dir, 'Experiment = %s, Phase = %s, Epoch = %s' % (opt.name, opt.phase, opt.epoch))
-    # # test with eval mode. This only affects layers like batchnorm and dropout.
-    # # For [pix2pix]: we use batchnorm and dropout in the original pix2pix. You can experiment it with and without eval() mode.
-    # # For [CycleGAN]: It should not affect CycleGAN as CycleGAN uses instancenorm without dropout.
-    # if opt.eval:
-    #     model.eval()
-    # for i, data in enumerate(dataset):
-    #     if i >= opt.num_test:  # only apply our model to opt.num_test images.
-    #         break
-    #     model.set_input(data)  # unpack data from data loader
-    #     model.test()           # run inference
-    #     model.compute_loss()
-    #     visuals = model.get_current_visuals()  # get image results
-    #     img_path = model.get_image_paths()     # get image paths
-    #     if i % 5 == 0:  # save images to an HTML file
-    #         print('processing (%04d)-th image... %s' % (i, img_path))
-    #     save_images(webpage, visuals, img_path, aspect_ratio=opt.aspect_ratio, width=opt.display_winsize, use_wandb=opt.use_wandb)
+    # create a website
+    web_dir = os.path.join(opt.results_dir, opt.name, '{}_{}'.format(opt.phase, opt.epoch))  # define the website directory
+    if opt.load_iter > 0:  # load_iter is 0 by default
+        web_dir = '{:s}_iter{:d}'.format(web_dir, opt.load_iter)
+    print('creating web directory', web_dir)
+    webpage = html.HTML(web_dir, 'Experiment = %s, Phase = %s, Epoch = %s' % (opt.name, opt.phase, opt.epoch))
+    # test with eval mode. This only affects layers like batchnorm and dropout.
+    # For [pix2pix]: we use batchnorm and dropout in the original pix2pix. You can experiment it with and without eval() mode.
+    # For [CycleGAN]: It should not affect CycleGAN as CycleGAN uses instancenorm without dropout.
+    if opt.eval:
+        model.eval()
+    for i, data in enumerate(dataset):
+        # if i >= opt.num_test:  # only apply our model to opt.num_test images.
+        if i >= 1:  # only apply our model to opt.num_test images.
+            break
+        model.set_input(data)  # unpack data from data loader
+        model.test()           # run inference
+        
+        # =======================================================================================
+        
+        # --------------------------------------------
+        # # a_tensor comparison
+        # allclose = torch.equal(data["A"], a_tensor)
+        # print("-")
+        # print("allclose", allclose)
+        # print("-")
+        # --------------------------------------------
+        # a_tensor comparison
+        # --------------------------------------------
+        # comparison_result = torch.eq(model.fake_B, fake_B)
+        with torch.no_grad():
+            model.eval()
+            # fake_B_1 = model.netG(a_tensor)
+            # fake_B_1 = model.fake_B
+            fake_B_1 = model.fake_B_RL
+            print(fake_B_1[0, :10])
+            
+        with torch.no_grad():
+            model.eval()
+            # fake_B_2 = model.netG(data["A"])
+            # fake_B_2 = fake_B
+            fake_B_2 = fake_B_RL
+            
+            comparison_result = torch.eq(fake_B_1, fake_B_2)
+            
+            allclose = torch.allclose(fake_B_1, fake_B_2)
+            print("-")
+            print("allclose", allclose)
+            print("-")
+        
+        # 找到等於 False 的位置
+        false_positions = torch.nonzero(~comparison_result)
+
+        # 計算 False 的數量
+        num_false = (~comparison_result).sum()
+
+        print("比較結果:")
+        print(comparison_result)
+
+        # print("\n等於 False 的位置:")
+        # print(false_positions)
+
+        print("\nFalse 的數量:")
+        print(num_false)
+        
+        
+        # =======================================================================================
+        
+        
+        model.compute_loss()
+        visuals = model.get_current_visuals()  # get image results
+        img_path = model.get_image_paths()     # get image paths
+        if i % 5 == 0:  # save images to an HTML file
+            print('processing (%04d)-th image... %s' % (i, img_path))
+        save_images(webpage, visuals, img_path, aspect_ratio=opt.aspect_ratio, width=opt.display_winsize, use_wandb=opt.use_wandb)
     
-    # # save_txt(opt, model.losses_list, model.same_list)
-    # # print(model.losses_list)
-    # # print(model.same_list)
+    
+    # ----------------------------------------------------------------------------
+    # save_txt(opt, model.losses_list, model.same_list)
+    # print(model.losses_list)
+    # print(model.same_list)
     # print("--------------------------------------")
     # print("loss mean: \t", np.mean(model.losses_list), "\n"
     #       "loss std:  \t", np.std(model.losses_list), "\n"
