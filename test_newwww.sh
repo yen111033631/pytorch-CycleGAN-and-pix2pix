@@ -47,7 +47,7 @@ model_name_list=( \
 # add DQN, netG_loss_setting "G_GAN+G_L1"
 for model_name in $model_name_list
 do 
-    python test_RL_newwww.py --dataroot /home/yen/mount/nas/111/111033631_Yen/ARM/GAN_images/all \
+    python test_RL_newwww.py --dataroot /home/yen/mount/nas/111/111033631_Yen/ARM/GAN_images/_010_010_010_shuffle_False_502_36 \
                     --model pix2pix \
                     --direction AtoB \
                     --netG resnet_9blocks \

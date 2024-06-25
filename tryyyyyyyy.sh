@@ -9,12 +9,16 @@ n_epochs=150
 model_prefix="S2R_256"
 
 # loss setting
+# G_GAN_existed="G_GAN"
+# G_L1_list=("G_L1" "")
+# gan_loss_list=("G_L1_RL" "G_L1_RL_nor" "G_cos_RL" "")
+
 G_GAN_existed="G_GAN"
-G_L1_list=("G_L1" "")
-gan_loss_list=("G_L1_RL" "G_L1_RL_nor" "G_cos_RL" "")
+G_L1_list=("G_L1")
+gan_loss_list=("")
 
 # some setting
-is_added_DQN=1
+is_added_DQN=0
 netD_existed=1
 
 data_dir="/home/yen/mount/nas/111/111033631_Yen/ARM/GAN_images/all"
@@ -57,7 +61,7 @@ for gan_loss in "${gan_loss_list[@]}"; do
                         --name "${model_name}" \
                         --is_added_DQN ${is_added_DQN} \
                         --netD_existed ${netD_existed} \
-                        --netD "numerical" \
+                        --netD "basic" \
                         --netD_input B \
                         --netG_loss_setting "${netG_loss_setting}" \
                         --n_epochs ${n_epochs} \
@@ -71,6 +75,7 @@ for gan_loss in "${gan_loss_list[@]}"; do
                         --netG resnet_9blocks \
                         --crop_size 256 \
                         --load_size 256 \
+                        --num_test 500 \
                         --input_nc 1 \
                         --output_nc 1 \
                         --name "${model_name}" \
