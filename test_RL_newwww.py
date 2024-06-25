@@ -36,6 +36,7 @@ import numpy as np
 from torchvision import transforms
 import cv2, torch
 from PIL import Image
+import rs
 
 try:
     import wandb
@@ -139,6 +140,7 @@ def cv2_to_pil(cv2_image):
         pil_image = Image.fromarray(cv2_image_rgb)
     
     return pil_image
+    
 # ----------------------------------------------------------------------------
 
 if __name__ == '__main__':
@@ -154,19 +156,30 @@ if __name__ == '__main__':
     model.setup(opt)               # regular setup: load and print networks; create schedulers
     
     model.eval()
+
+    my_cam = rs.Cam()
+    Mem = rs.MemoryCommunicator()
     
     # =======================================================================================
     i = 0
     while True:
         # get frame
-        real_img_path = r"Y:\111\111033631_Yen\ARM\capture_images_real\Jun17_H15_M21_S56_010_010_010_shuffle_False_502_36_001\img_0002.jpg"
-        frame = cv2.imread(real_img_path)
+        # real_img_path = r"Y:\111\111033631_Yen\ARM\capture_images_real\Jun17_H15_M21_S56_010_010_010_shuffle_False_502_36_001\img_0002.jpg"
+        # frame = cv2.imread(real_img_path)
+
+        frame = my_cam.get_frame()
+
+        # position = get_current_position()
+        position = Mem.read_regs(3, address=0x00F0)
+        print(position)
+
         # transfer cv2 to PIL
         image = cv2_to_pil(frame)
         # get tensor
         image_tensor = get_tensor(image, size=256)
         displacement = model.S2R_displacement(image_tensor) 
         print(displacement)
+
         
         if i > 10:
             break
