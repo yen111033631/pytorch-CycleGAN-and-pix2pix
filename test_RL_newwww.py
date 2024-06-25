@@ -159,7 +159,7 @@ if __name__ == '__main__':
     i = 0
     while True:
         # get frame
-        real_img_path = "/home/yen/mount/nas/111/111033631_Yen/ARM/capture_images_real/Jun17_H15_M21_S56_010_010_010_shuffle_False_502_36_001/img_0002.jpg"
+        real_img_path = r"Y:\111\111033631_Yen\ARM\capture_images_real\Jun17_H15_M21_S56_010_010_010_shuffle_False_502_36_001\img_0002.jpg"
         frame = cv2.imread(real_img_path)
         # transfer cv2 to PIL
         image = cv2_to_pil(frame)

@@ -18,30 +18,6 @@
 # ----------------------------------
 model_name_list=( \
                  "S2R_256_DQN1_netD1_G_GAN_G_L1_G_L1_RL_for_testttt" \
-                #  "pix2pix_arm_84_DQN1_netD1_netGloss_GAN_L1" \
-                #  "pix2pix_arm_84_DQN0_netD1_origin_wgan" \
-                #  "pix2pix_arm_84_DQN1_netD1_netGloss_GAN_L1_wgan" \
-
-
-                #  "pix2pix_arm_84_DQN1_netD0_netGloss_GAN_RLL1" \
-                #  "pix2pix_arm_84_DQN1_netD0_netGloss_GAN_RLL1_nor" \
-                #  "pix2pix_arm_84_DQN1_netD0_netGloss_GAN_RLcos" \
-                #  "pix2pix_arm_84_DQN1_netD0_netGloss_GAN_RLcos_nor"         
-
-
-
-
-                #  "pix2pix_arm_84_DQN1_netD0_netGloss_RLcos" \
-
-                #  "pix2pix_arm_84_origin_netD_input_AB" \
-                #  "pix2pix_arm_84_origin_netD_input_B" \
-                #  "pix2pix_arm_84_DQN1_netD1_netGloss_GAN_L1" \
-                #  "pix2pix_arm_84_DQN1_netD1_netGloss_GAN_L1_RLL1" \
-                #  "pix2pix_arm_84_DQN1_netD0_netGloss_RLL1" \
-                #  "pix2pix_arm_84_DQN1_netD0_netGloss_L1_RLL1" \
-                #  "pix2pix_arm_84_DQN1_netDPN_netGloss_GAN_L1" \
-                #  "pix2pix_arm_84_DQN1_netDPN_netGloss_GAN_L1_RLL1" \`
-                #  "pix2pix_arm_84_DQN1_netD1_netGloss_GAN_RLL1" \
                  )
 # ----------------------------------
 # add DQN, netG_loss_setting "G_GAN+G_L1"
