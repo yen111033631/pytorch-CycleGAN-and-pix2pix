@@ -93,7 +93,7 @@ class MemoryCommunicator:
     def __init__(self):
         self.c = connect_robot()
 
-    def write_into_regs(self, x, address=0x1100):
+    def write_data(self, x, address=0x1100):
         flattened_list = turn_into_one_list(x)
         i = 0
         while True:
@@ -103,7 +103,7 @@ class MemoryCommunicator:
                 break
         return i   
 
-    def read_regs(self, amount, address=0x1100):
+    def read_data(self, amount, address=0x1100):
         while True:
             regs = self.c.read_holding_registers(address, amount*2)
             if regs != None:
@@ -160,8 +160,8 @@ def turn_into_one_list(x):
 
     # turn into DRA 
     for data in x:
-        for element in data:
-            all_data_DRA.append(intL2DRA(element * 10**6))
+        # for element in data:
+        all_data_DRA.append(intL2DRA(data * 10**6))
 
     # turn into numpy 
     arr_DRA = np.asanyarray(all_data_DRA)
@@ -238,7 +238,7 @@ if __name__ == "__main__":
     # for i in (range(df.shape[0])):
         # ------------------------------------------------
         # reset memory
-        num = write_into_regs([[0]*10], address)
+        num = write_into_regs([0]*10, address)
         # ------------------------------------------------
         # get row name 
         df_row_name = df.iloc[i].name
@@ -258,7 +258,7 @@ if __name__ == "__main__":
             j = [0] * 6
             # ------------------------------------------------
             # send position and joint data (write regs)
-            num = write_into_regs([[1], j, p], address)
+            num = write_into_regs([1, *j, *p], address)
             # ------------------------------------------------
             # check arm move done (read regs)
             while True:
@@ -284,7 +284,7 @@ if __name__ == "__main__":
         print(i, p)
         # ------------------------------------------------
         # send position and joint data (write regs)
-        num = write_into_regs([[1], j, p], address)
+        num = write_into_regs([1, *j, *p], address)
         # ------------------------------------------------
         # check arm move done (read regs)
         while True:
@@ -294,13 +294,13 @@ if __name__ == "__main__":
         # ------------------------------------------------
         # take photo 
         if is_save: my_cam.capture_pic(image_type="color", image_name=df_row_name) # TODO only capture color
-        write_into_regs([[3]], address)
+        write_into_regs([3], address)
         time.sleep(0.1)
         # ------------------------------------------------
 
     # ----------------------------------------------------
     # write end command into memory 
-    write_into_regs([[-1] * 10], address)
+    write_into_regs([-1] * 10, address)
     # ----------------------------------------------------
     # close cam
     if is_save: my_cam.close_cam()

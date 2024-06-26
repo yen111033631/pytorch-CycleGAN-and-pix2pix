@@ -3,7 +3,7 @@
 setlocal enabledelayedexpansion
 
 rem ----------------------------------
-set model_name_list="S2R_256_DQN1_netD1_G_GAN_G_L1_G_L1_RL_for_testttt"
+set model_name_list="S2R_256_DQN1_netD1_G_GAN_G_L1"
 rem ----------------------------------
 rem add DQN, netG_loss_setting "G_GAN+G_L1"
 
