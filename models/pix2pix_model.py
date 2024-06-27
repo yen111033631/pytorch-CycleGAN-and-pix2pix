@@ -387,6 +387,8 @@ class Pix2PixModel(BaseModel):
                                               theta_num=8, 
                                               shell_unit_length=0.025)
         displacement = spherical_to_cartesian(r, t, p)
+
+
         
         # return displacement
-        return displacement
+        return fake_B, displacement

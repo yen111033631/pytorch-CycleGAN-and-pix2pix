@@ -36,6 +36,8 @@ import numpy as np
 from torchvision import transforms
 import cv2, torch
 from PIL import Image
+import rs
+import time
 
 try:
     import wandb
@@ -123,6 +125,33 @@ def get_tensor(image, size=256):
     ])
     return transform(image)
 
+def reverse_transform(transformed_image, original_size=None):
+    """
+    Reverses the transformations applied to the image and displays it.
+
+    Parameters:
+    - transformed_image (torch.Tensor): The transformed image tensor.
+    - original_size (tuple): The original size of the image (height, width). Default is None.
+
+    Returns:
+    - None
+    """
+    # Step 1: Remove the extra dimension
+    image_tensor = transformed_image.squeeze(0)
+
+    # Step 2: Reverse normalization
+    inverse_normalize = transforms.Normalize(
+        mean=[-0.5 / 0.5], std=[1 / 0.5]
+    )
+    image_tensor = inverse_normalize(image_tensor)
+
+    # Step 3: Convert the tensor to a NumPy array
+    image_np = image_tensor.squeeze().numpy() * 255  # Scale back to [0, 255]
+    image_np = image_np.astype(np.uint8)
+    
+    return image_np
+
+
 def cv2_to_pil(cv2_image):
     """
     將 OpenCV 圖像轉換為 PIL 圖像
@@ -139,6 +168,7 @@ def cv2_to_pil(cv2_image):
         pil_image = Image.fromarray(cv2_image_rgb)
     
     return pil_image
+    
 # ----------------------------------------------------------------------------
 
 if __name__ == '__main__':
@@ -154,19 +184,47 @@ if __name__ == '__main__':
     model.setup(opt)               # regular setup: load and print networks; create schedulers
     
     model.eval()
+
+    my_cam = rs.Cam()
+    Mem = rs.MemoryCommunicator()
+    address = 0x1100
     
     # =======================================================================================
     i = 0
     while True:
         # get frame
-        real_img_path = "/home/yen/mount/nas/111/111033631_Yen/ARM/capture_images_real/Jun17_H15_M21_S56_010_010_010_shuffle_False_502_36_001/img_0002.jpg"
-        frame = cv2.imread(real_img_path)
+        frame = my_cam.get_frame()
+
+        cv2.imshow('RealSense', frame)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+        
+
+        # position = get_current_position()
+        position = Mem.read_data(3, address=0x00F0)
+        print(position)
+
         # transfer cv2 to PIL
         image = cv2_to_pil(frame)
         # get tensor
         image_tensor = get_tensor(image, size=256)
-        displacement = model.S2R_displacement(image_tensor) 
+        fake_B_tensor, displacement = model.S2R_displacement(image_tensor) 
+        fake_B_img = reverse_transform(fake_B_tensor.cpu())
         print(displacement)
+        
+        cv2.imshow('fake_B_img', fake_B_img)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+
+        next_position = position + displacement
+        next_position = [x * 1000 for x in next_position]
+        print(next_position)
+
+        j = [0] * 6
+
+        Mem.write_data([1, *j, *next_position], address)
+        time.sleep(0.1)
+
         
         if i > 10:
             break
