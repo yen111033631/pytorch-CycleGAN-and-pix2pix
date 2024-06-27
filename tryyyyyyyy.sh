@@ -10,16 +10,16 @@ model_prefix="S2R_256"
 
 # loss setting
 # G_GAN_existed="G_GAN"
-# G_L1_list=("G_L1" "")
-# gan_loss_list=("G_L1_RL" "G_L1_RL_nor" "G_cos_RL" "")
+G_L1_list=("G_L1" "")
+gan_loss_list=("G_L1_RL" "G_L1_RL_nor" "G_cos_RL" "")
 
-G_GAN_existed="G_GAN"
-G_L1_list=("G_L1")
-gan_loss_list=("")
+# G_GAN_existed="G_GAN"
+# G_L1_list=("G_L1")
+# gan_loss_list=("")
 
 # some setting
-is_added_DQN=0
-netD_existed=1
+is_added_DQN=1
+netD_existed=0
 
 data_dir="/home/yen/mount/nas/111/111033631_Yen/ARM/GAN_images/all"
 
@@ -45,8 +45,8 @@ for gan_loss in "${gan_loss_list[@]}"; do
         fi
 
         # 拼接 model_name 和 GAN_loss_set
-        model_name="${model_prefix}_DQN${is_added_DQN}_netD${netD_existed}_${G_GAN_existed}${desh_G_L1}${desh_gan_loss}"
-        netG_loss_setting="${G_GAN_existed}${plus_G_L1}${plus_gan_loss}"
+        model_name="${model_prefix}_DQN${is_added_DQN}_netD${netD_existed}${desh_G_L1}${desh_gan_loss}"
+        netG_loss_setting="${G_L1}${plus_gan_loss}"
         echo "$model_name"
         echo "$netG_loss_setting"
         echo "---------------------------------"
@@ -61,7 +61,7 @@ for gan_loss in "${gan_loss_list[@]}"; do
                         --name "${model_name}" \
                         --is_added_DQN ${is_added_DQN} \
                         --netD_existed ${netD_existed} \
-                        --netD "basic" \
+                        --netD "numerical" \
                         --netD_input B \
                         --netG_loss_setting "${netG_loss_setting}" \
                         --n_epochs ${n_epochs} \
