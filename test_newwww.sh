@@ -17,7 +17,8 @@
 
 # ----------------------------------
 model_name_list=( \
-                 "S2R_256_DQN1_netD1_G_GAN_G_L1" \
+                #  "S2R_256_DQN1_netD1_G_GAN_G_L1" \
+                 "S2R_256_cam_shift_input3_DQN1_netD1_G_GAN_G_L1" \
                  )
 # ----------------------------------
 # add DQN, netG_loss_setting "G_GAN+G_L1"
@@ -30,7 +31,7 @@ do
                     --crop_size 256 \
                     --load_size 256 \
                     --num_test 500 \
-                    --input_nc 1 \
+                    --input_nc 3 \
                     --output_nc 1 \
                     --name "${model_name}" \
                     --is_added_DQN 1

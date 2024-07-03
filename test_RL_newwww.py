@@ -117,7 +117,7 @@ def get_tensor(image, size=256):
     # 定義變換管道
     transform = transforms.Compose([
         transforms.Lambda(add_black_border_to_square_PIL),
-        transforms.Grayscale(1),
+        # transforms.Grayscale(1),
         transforms.Resize((size, size)),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.5], std=[0.5]),
@@ -235,8 +235,8 @@ if __name__ == '__main__':
     # a, b = read_from_PIL(image_path)
     
     # image_path = "/home/yen/mount/nas/111/111033631_Yen/ARM/capture_images_real/Jun17_H15_M21_S56_010_010_010_shuffle_False_502_36_001/img_0000.jpg"
-    image_path = "/home/yen/mount/nas/111/111033631_Yen/ARM/capture_images_real/images/Jun26_H20_M33_S20/img_1_color.jpg"
-    a = Image.open(image_path).convert('L')
+    image_path = "/home/yen/mount/nas/111/111033631_Yen/ARM/capture_images_real/images/Jul02_H22_M27_S59/img_1_color.bmp"
+    a = Image.open(image_path)
     a.save('real_A_img.jpg')
     # # # ab = cv2.imread(image_path, 0)
     # # # a, b = split_image(ab)
