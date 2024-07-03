@@ -187,67 +187,70 @@ if __name__ == '__main__':
 
     
     # =======================================================================================
-    # my_cam = rs.Cam()
-    # Mem = rs.MemoryCommunicator()
-    # address = 0x1100
-    # i = 0
-    # while True:
-    #     # get frame
-    #     frame = my_cam.get_frame()
+    my_cam = rs.Cam()
+    Mem = rs.MemoryCommunicator()
+    address = 0x1100
+    i = 0
+    while True:
+        # get frame
+        frame = my_cam.get_frame()
 
-    #     cv2.imshow('RealSense', frame)
-    #     cv2.waitKey(0)
-    #     cv2.destroyAllWindows()
+        # cv2.imshow('RealSense', frame)
+        # cv2.waitKey(0)
+        # cv2.destroyAllWindows()
         
 
-    #     # position = get_current_position()
-    #     position = Mem.read_data(3, address=0x00F0)
-    #     print(position)
+        # position = get_current_position()
+        position = Mem.read_data(3, address=0x00F0)
+        print(position)
 
-    #     # transfer cv2 to PIL
-    #     image = cv2_to_pil(frame)
-    #     # get tensor
-    #     image_tensor = get_tensor(image, size=256)
-    #     fake_B_tensor, displacement = model.S2R_displacement(image_tensor) 
-    #     fake_B_img = reverse_transform(fake_B_tensor.cpu())
-    #     print(displacement)
+        # transfer cv2 to PIL
+        image = cv2_to_pil(frame)
+        # get tensor
+        image_tensor = get_tensor(image, size=256)
+        fake_B_tensor, displacement = model.S2R_displacement(image_tensor) 
+        fake_B_img = reverse_transform(fake_B_tensor.cpu())
+        print(displacement)
         
-    #     cv2.imshow('fake_B_img', fake_B_img)
-    #     cv2.waitKey(0)
-    #     cv2.destroyAllWindows()
+        cv2.imshow('RealSense', frame)
+        cv2.imshow('fake_B_img', fake_B_img)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
 
-    #     next_position = position + displacement
-    #     next_position = [x * 1000 for x in next_position]
-    #     print(next_position)
+        next_position = position + displacement
+        next_position = [x * 1000 for x in next_position]
+        print(next_position)
 
-    #     j = [0] * 6
+        j = [0] * 6
 
-    #     Mem.write_data([1, *j, *next_position], address)
-    #     time.sleep(0.1)
+        Mem.write_data([1, *j, *next_position], address)
+        time.sleep(0.1)
 
         
-    #     if i > 10:
-    #         break
-    #     i += 1
-    # # =======================================================================================
+        if i > 20:
+            break
+        i += 1
+    # =======================================================================================
     # # image_path = "/home/yen/mount/nas/111/111033631_Yen/ARM/GAN_images/all/test/img_0804.jpg"
     # image_path = "/home/yen/mount/nas/111/111033631_Yen/ARM/GAN_images/_010_010_010_shuffle_False_502_36/test/img_0002.jpg"
     # a, b = read_from_PIL(image_path)
-    
     # image_path = "/home/yen/mount/nas/111/111033631_Yen/ARM/capture_images_real/Jun17_H15_M21_S56_010_010_010_shuffle_False_502_36_001/img_0000.jpg"
-    image_path = "/home/yen/mount/nas/111/111033631_Yen/ARM/capture_images_real/images/Jul02_H22_M27_S59/img_1_color.bmp"
-    a = Image.open(image_path)
-    a.save('real_A_img.jpg')
     # # # ab = cv2.imread(image_path, 0)
     # # # a, b = split_image(ab)
     
     # # # transform = get_tensor()
-    a_tensor = get_tensor(a)
     
-    fake_B_tensor, displacement = model.S2R_displacement(a_tensor)  
-    fake_B_img = reverse_transform(fake_B_tensor.cpu())
+    # --
     
-    cv2.imwrite('fake_B_img.jpg', fake_B_img)
+    # image_path = "/home/yen/mount/nas/111/111033631_Yen/ARM/capture_images_real/images/Jul02_H22_M27_S59/img_1_color.bmp"
+    # a = Image.open(image_path)
+    # a.save('real_A_img.jpg')
+    # a_tensor = get_tensor(a)
+    
+    # fake_B_tensor, displacement = model.S2R_displacement(a_tensor)  
+    # fake_B_img = reverse_transform(fake_B_tensor.cpu())
+    
+    # cv2.imwrite('fake_B_img.jpg', fake_B_img)
     
 
     
