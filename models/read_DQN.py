@@ -4,7 +4,7 @@ import numpy as np
 import torch
 import cv2
 from matplotlib import pyplot as plt
-import os
+import os, glob
 from tqdm import tqdm
 
 class Env:
@@ -23,14 +23,15 @@ class Env:
                                             shape=(image_size, image_size, channel_n), 
                                             dtype=np.uint8)
         
-def set_up_agent(image_size=84):
+def set_up_agent(image_size=84, which_DQN="007"):
     
     if image_size == 84:
         from .DQN_Atari import DQNAgent
         model_dir = "./RL_model/DQN_gray/Apr15_H17_M58_S28_cube_gray_neaf2080_002/good_model_state_dict.pt"
     elif image_size == 256:
         from .DQN_Atari_256 import DQNAgent
-        model_dir = "./RL_model/DQN_gray_256/Jun16_H04_M34_S56_cube_gray_neaf-3090_007/good_model_state_dict.pt"
+        model_dir = glob.glob(f"./RL_model/DQN_gray_256/*_{which_DQN}/good_model_state_dict.pt")[0]
+        print(model_dir)
     else:
         print("image_size must be 84 or 256")
         exit()

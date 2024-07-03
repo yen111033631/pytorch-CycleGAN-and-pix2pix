@@ -3,10 +3,10 @@
 
 # ----------------------------------
 # original train
-n_epochs=10
+n_epochs=150
 
 # model name
-model_prefix="S2R_256_tt"
+model_prefix="S2R_256_cam_shift"
 
 # loss setting
 # # G_GAN_existed="G_GAN"
@@ -21,7 +21,7 @@ gan_loss_list=("")
 is_added_DQN=1
 netD_existed=1
 input_nc_list=(3 1)
-
+which_DQN="010"
 
 data_dir="/home/yen/mount/nas/111/111033631_Yen/ARM/GAN_images/all_002"
 
@@ -63,6 +63,7 @@ for gan_loss in "${gan_loss_list[@]}"; do
                             --output_nc 1 \
                             --name "${model_name}" \
                             --is_added_DQN ${is_added_DQN} \
+                            --which_DQN "${which_DQN}" \
                             --netD_existed ${netD_existed} \
                             --netD "numerical" \
                             --netD_input B \
@@ -82,7 +83,8 @@ for gan_loss in "${gan_loss_list[@]}"; do
                             --input_nc ${input_nc} \
                             --output_nc 1 \
                             --name "${model_name}" \
-                            --is_added_DQN 1 
+                            --is_added_DQN 1 \
+                            --which_DQN "${which_DQN}"
 
         done
     done

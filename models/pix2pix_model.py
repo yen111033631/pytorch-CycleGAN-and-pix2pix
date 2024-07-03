@@ -116,7 +116,7 @@ class Pix2PixModel(BaseModel):
         # ------------------------------------------------------------------
         # DQN model 
         self.is_added_DQN = opt.is_added_DQN
-        self.agent = set_up_agent(opt.crop_size)
+        self.agent = set_up_agent(opt.crop_size, opt.which_DQN)
         # opt.netD = "numerical" if self.is_added_DQN else opt.netD
         # ------------------------------------------------------------------
         # define networks (both generator and discriminator)

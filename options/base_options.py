@@ -59,6 +59,7 @@ class BaseOptions():
         parser.add_argument('--wandb_project_name', type=str, default='CycleGAN-and-pix2pix', help='specify wandb project name')
         # add DQN
         parser.add_argument('--is_added_DQN', type=int, default=0, help='there will be a DQN after netG. [0 | 1]')
+        parser.add_argument('--which_DQN', type=str, default="007", help='DQN serial number. ex: 007')
         parser.add_argument('--netD_existed', type=int, default=1, help='netD exists or not. [0 | 1].')
         parser.add_argument('--netG_loss_setting', type=str, default="G_GAN+G_L1", help='netD loss setting. elements: ["G_GAN", "G_L1", "G_L1_RL", "G_cos_RL"]')
         parser.add_argument('--pixelnumerical_type', type=int, default=1, help='pixelnumerical type. [1 | 2 | 3]')
