@@ -38,6 +38,7 @@ import cv2, torch
 from PIL import Image
 import rs
 import time
+import glob
 
 try:
     import wandb
@@ -105,7 +106,7 @@ def add_black_border_to_square_PIL(image):
     return new_image
 
 def read_from_PIL(image_path):
-    AB = Image.open(image_path).convert('L')
+    AB = Image.open(image_path)
     # # split AB image into A and B
     w, h = AB.size
     w2 = int(w / 2)
@@ -232,22 +233,37 @@ if __name__ == '__main__':
     # # =======================================================================================
     # # image_path = "/home/yen/mount/nas/111/111033631_Yen/ARM/GAN_images/all/test/img_0804.jpg"
     # image_path = "/home/yen/mount/nas/111/111033631_Yen/ARM/GAN_images/_010_010_010_shuffle_False_502_36/test/img_0002.jpg"
+    # image_path = "/home/yen/mount/nas/111/111033631_Yen/ARM/GAN_images/all_002/test/img_0804.jpg"
     # a, b = read_from_PIL(image_path)
     
     # image_path = "/home/yen/mount/nas/111/111033631_Yen/ARM/capture_images_real/Jun17_H15_M21_S56_010_010_010_shuffle_False_502_36_001/img_0000.jpg"
-    image_path = "/home/yen/mount/nas/111/111033631_Yen/ARM/capture_images_real/images/Jul02_H22_M27_S59/img_1_color.bmp"
-    a = Image.open(image_path)
-    a.save('real_A_img.jpg')
-    # # # ab = cv2.imread(image_path, 0)
-    # # # a, b = split_image(ab)
+    # image_path = "/home/yen/mount/nas/111/111033631_Yen/ARM/capture_images_real/images/Jul02_H22_M27_S59/img_1_color.bmp"
     
-    # # # transform = get_tensor()
-    a_tensor = get_tensor(a)
+    image_path_list = glob.glob("/home/yen/mount/nas/111/111033631_Yen/ARM/capture_images_real/images/Jul04_H22_M15_S40/img_*_color.bmp")
     
-    fake_B_tensor, displacement = model.S2R_displacement(a_tensor)  
-    fake_B_img = reverse_transform(fake_B_tensor.cpu())
+    folder_name =os.path.basename(os.path.dirname(image_path_list[0]))
     
-    cv2.imwrite('fake_B_img.jpg', fake_B_img)
+    folder_dir = f"./test_newww/{folder_name}__"
+    os.makedirs(folder_dir, exist_ok=True)
+    
+    for i, image_path in enumerate(image_path_list):
+        base_name = os.path.basename(image_path)
+        print(i, os.path.basename(image_path))
+        a = Image.open(image_path)
+        a.save(f"{folder_dir}/{base_name[:-4]}.png")
+        
+        a_tensor = get_tensor(a)
+        fake_B_tensor, displacement = model.S2R_displacement(a_tensor)  
+        fake_B_img = reverse_transform(fake_B_tensor.cpu())
+        
+        cv2.imwrite(f"{folder_dir}/{base_name[:-4]}_fake_B.png", fake_B_img)
+
+    
+    
+    # # # # ab = cv2.imread(image_path, 0)
+    # # # # a, b = split_image(ab)
+    
+    # # # # transform = get_tensor()
     
 
     
@@ -327,7 +343,43 @@ if __name__ == '__main__':
     #     if i >= 1:  # only apply our model to opt.num_test images.
     #         break
     #     model.set_input(data)  # unpack data from data loader
-    #     model.test()           # run inference        
+    #     model.test()           # run inference       
+    #     print(data["A_paths"][0] == image_path)
+    #     print(data["A"].shape)
+    #     print(a_tensor.shape)
+        
+    #     tensor_1 = data["A"].cpu()
+    #     tensor_2 = a_tensor
+        
+    #     comparison_result = torch.eq(tensor_1, tensor_2)
+    #     print(comparison_result)
+        
+    #     allclose = torch.allclose(tensor_1, tensor_2)
+    #     print("-")
+    #     print("allclose", allclose)
+    #     print("-")  
+        
+    #     # 找到等於 False 的位置
+    #     false_positions = torch.nonzero(~comparison_result)
+
+    #     # 計算 False 的數量
+    #     num_false = (~comparison_result).sum()
+
+    #     print("比較結果:")
+    #     print(comparison_result)
+
+    #     print("\n等於 False 的位置:")
+    #     print(false_positions)
+
+    #     print("\nFalse 的數量:")
+    #     print(num_false)        
+        
+        
+        
+    #     fake_B_img_model = reverse_transform(model.fake_B.cpu())
+    
+    #     cv2.imwrite('fake_B_img_model.png', fake_B_img_model)
+         
         
     #     model.compute_loss()
     #     visuals = model.get_current_visuals()  # get image results

@@ -18,13 +18,14 @@
 # ----------------------------------
 model_name_list=( \
                 #  "S2R_256_DQN1_netD1_G_GAN_G_L1" \
-                 "S2R_256_cam_shift_input3_DQN1_netD1_G_GAN_G_L1" \
+                 "S2R_256_cam_shift_input3_DQN1_netD1_G_GAN_G_L1_tt" \
+                #  "S2R_256_cam_shift_all_1500_input3_DQN1_netD1_G_GAN_G_L1_tt" \
                  )
 # ----------------------------------
 # add DQN, netG_loss_setting "G_GAN+G_L1"
 for model_name in $model_name_list
 do 
-    python test_RL_newwww.py --dataroot /home/yen/mount/nas/111/111033631_Yen/ARM/GAN_images/_010_010_010_shuffle_False_502_36 \
+    python test_RL_newwww.py --dataroot "/home/yen/mount/nas/111/111033631_Yen/ARM/GAN_images/all_002" \
                     --model pix2pix \
                     --direction AtoB \
                     --netG resnet_9blocks \
