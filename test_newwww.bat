@@ -19,7 +19,8 @@ for %%m in (%model_name_list%) do (
                     --output_nc 1 ^
                     --name "%%m" ^
                     --is_added_DQN 1 ^
-                    --which_DQN "007" 
+                    --which_DQN "007" ^
+                    --gpu_ids 0
 )
 
 endlocal

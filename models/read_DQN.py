@@ -23,7 +23,7 @@ class Env:
                                             shape=(image_size, image_size, channel_n), 
                                             dtype=np.uint8)
         
-def set_up_agent(image_size=84, which_DQN="007"):
+def set_up_agent(image_size=84, which_DQN="007", gpu_ids=[]):
     
     if image_size == 84:
         from .DQN_Atari import DQNAgent
@@ -42,7 +42,11 @@ def set_up_agent(image_size=84, which_DQN="007"):
     # ----------------------------
     # agent
     agent = DQNAgent(env=env)       
-    agent.DQN.load_state_dict(torch.load(model_dir))    
+    if len(gpu_ids) == 0:
+        agent.DQN.load_state_dict(torch.load(model_dir, map_location=torch.device('cpu')))    
+        agent.DQN.cpu() 
+    else:
+        agent.DQN.load_state_dict(torch.load(model_dir))    
     agent.DQN.requires_grad_(False)
     # agent.DQN.eval()
     # ----------------------------

@@ -204,22 +204,25 @@ if __name__ == '__main__':
         position = Mem.read_data(3, address=0x00F0)
         print(position)
 
+        start = time.time()
         # transfer cv2 to PIL
         image = cv2_to_pil(frame)
         # get tensor
         image_tensor = get_tensor(image, size=256)
         fake_B_tensor, displacement = model.S2R_displacement(image_tensor) 
         fake_B_img = reverse_transform(fake_B_tensor.cpu())
-        print(displacement)
+        # print(displacement)
+        end = time.time()
+        print("spend time:", round(end-start, 5))
         
-        cv2.imshow('RealSense', frame)
-        cv2.imshow('fake_B_img', fake_B_img)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
+        # cv2.imshow('RealSense', frame)
+        # cv2.imshow('fake_B_img', fake_B_img)
+        # cv2.waitKey(1)
+        # cv2.destroyAllWindows()
 
         next_position = position + displacement
         next_position = [x * 1000 for x in next_position]
-        print(next_position)
+        # print(next_position)
 
         j = [0] * 6
 
