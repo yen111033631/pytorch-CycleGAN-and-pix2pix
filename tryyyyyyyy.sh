@@ -3,10 +3,10 @@
 
 # ----------------------------------
 # original train
-n_epochs=150
+n_epochs=200
 
 # model name
-model_prefix="S2R_256_cam_shift_all_1500"
+model_prefix="S2R_256_arm_trajectory_3090"
 
 # loss setting
 # # G_GAN_existed="G_GAN"
@@ -23,7 +23,7 @@ netD_existed=1
 input_nc_list=(3)
 which_DQN="010"
 
-data_dir="/home/yen/mount/nas/111/111033631_Yen/ARM/GAN_images/all_1500"
+data_dir="/home/yen/mount/nas/111/111033631_Yen/ARM/GAN_images/_010_0100_882_882"
 
 
 # 迴圈處理

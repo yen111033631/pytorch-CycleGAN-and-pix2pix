@@ -31,6 +31,7 @@ from options.test_options import TestOptions
 from data import create_dataset
 from models import create_model
 from util.visualizer import save_images
+from util import util
 from util import html
 import numpy as np
 from torchvision import transforms
@@ -39,6 +40,7 @@ from PIL import Image
 import rs
 import time
 import glob
+import matplotlib.pyplot as plt
 
 try:
     import wandb
@@ -61,19 +63,29 @@ setup_seed(525)
 
 
 def save_txt(opt, losses_list, same_list):
-    txt_dir = f"./results/{opt.name}/test_result.txt"
-    with open(txt_dir, "a") as txt_file:
-        txt_file.write("--------------------------------------\n")
-        txt_file.write(f"is_added_DQN: \t{opt.is_added_DQN}\n")
-        txt_file.write(f"loss mean:    \t{np.mean(losses_list)}\n")
-        txt_file.write(f"loss std:     \t{np.std(losses_list)}\n")
-        txt_file.write(f"loss lens:    \t{len(losses_list)}\n")
-        txt_file.write(f"loss max:     \t{np.max(losses_list)}\n")
-        txt_file.write(f"loss min:     \t{np.min(losses_list)}\n")
-        txt_file.write(f"success rate: \t{np.mean(same_list)}\n")
-        txt_file.write(f"loss lens: \t\t{len(losses_list)}\n")
-        txt_file.write("--------------------------------------\n")
+    txt_list = [f"./results/{opt.name}/test_result.txt", f"./results/{opt.name}/test_latest/test_result.txt"]
+    for txt_dir in txt_list:
+        with open(txt_dir, "a") as txt_file:
+            txt_file.write("--------------------------------------\n")
+            txt_file.write(f"is_added_DQN: \t{opt.is_added_DQN}\n")
+            txt_file.write(f"loss mean:    \t{np.mean(losses_list)}\n")
+            txt_file.write(f"loss std:     \t{np.std(losses_list)}\n")
+            txt_file.write(f"loss lens:    \t{len(losses_list)}\n")
+            txt_file.write(f"loss max:     \t{np.max(losses_list)}\n")
+            txt_file.write(f"loss min:     \t{np.min(losses_list)}\n")
+            txt_file.write(f"success rate: \t{np.mean(same_list)}\n")
+            txt_file.write(f"loss lens: \t\t{len(losses_list)}\n")
+            txt_file.write("--------------------------------------\n")
 
+# ----------------------------------------------------------------------------
+def save_loss_png(loss:list):
+    plt.figure(figsize=(10, 6))
+    plt.hist(loss, bins=30, alpha=0.75, edgecolor='black')
+    plt.title('Distribution of Sample Data')
+    plt.xlabel('Value')
+    plt.ylabel('Frequency')
+    plt.grid(True)
+    plt.savefig(f"./results/{opt.name}/test_latest/loss.png")
 # ----------------------------------------------------------------------------
 def split_image(image):
     # image = cv2.imread(image_path, 0)
@@ -184,7 +196,8 @@ if __name__ == '__main__':
     model = create_model(opt)      # create a model given opt.model and other options
     model.setup(opt)               # regular setup: load and print networks; create schedulers
     
-    model.eval()
+    if opt.eval:
+        model.eval()
 
     
     # =======================================================================================
@@ -231,175 +244,116 @@ if __name__ == '__main__':
     #         break
     #     i += 1
     # # =======================================================================================
-    # # image_path = "/home/yen/mount/nas/111/111033631_Yen/ARM/GAN_images/all/test/img_0804.jpg"
-    # image_path = "/home/yen/mount/nas/111/111033631_Yen/ARM/GAN_images/_010_010_010_shuffle_False_502_36/test/img_0002.jpg"
-    # image_path = "/home/yen/mount/nas/111/111033631_Yen/ARM/GAN_images/all_002/test/img_0804.jpg"
-    # a, b = read_from_PIL(image_path)
+    # image_path_list = glob.glob("/home/yen/mount/nas/111/111033631_Yen/ARM/GAN_images/_010_0100_882_882/test/*.jpg")
+    # folder_name =image_path_list[0].split("/")[-3]
     
-    # image_path = "/home/yen/mount/nas/111/111033631_Yen/ARM/capture_images_real/Jun17_H15_M21_S56_010_010_010_shuffle_False_502_36_001/img_0000.jpg"
-    # image_path = "/home/yen/mount/nas/111/111033631_Yen/ARM/capture_images_real/images/Jul02_H22_M27_S59/img_1_color.bmp"
+    # folder_dir = f"./test_newww/{folder_name}__1"
+    # os.makedirs(folder_dir, exist_ok=True)
     
-    image_path_list = glob.glob("/home/yen/mount/nas/111/111033631_Yen/ARM/capture_images_real/images/Jul04_H22_M15_S40/img_*_color.bmp")
-    
-    folder_name =os.path.basename(os.path.dirname(image_path_list[0]))
-    
-    folder_dir = f"./test_newww/{folder_name}__"
-    os.makedirs(folder_dir, exist_ok=True)
-    
-    for i, image_path in enumerate(image_path_list):
-        base_name = os.path.basename(image_path)
-        print(i, os.path.basename(image_path))
-        a = Image.open(image_path)
-        a.save(f"{folder_dir}/{base_name[:-4]}.png")
+    # for i, image_path in enumerate(image_path_list):
+    #     base_name = os.path.basename(image_path)
+    #     print(i, base_name)
         
-        a_tensor = get_tensor(a)
-        fake_B_tensor, displacement = model.S2R_displacement(a_tensor)  
-        fake_B_img = reverse_transform(fake_B_tensor.cpu())
         
-        cv2.imwrite(f"{folder_dir}/{base_name[:-4]}_fake_B.png", fake_B_img)
-
-    
-    
-    # # # # ab = cv2.imread(image_path, 0)
-    # # # # a, b = split_image(ab)
-    
-    # # # # transform = get_tensor()
-    
-
-    
-    
-    # # fake_B_1 = a_tensor
-    # # fake_B_2 = aa_tensor
-    # # fake_B_1 = model.real_A.cpu()
-    # # fake_B_2 = data["A"].cpu()
-    # # fake_B_1 = model.fake_B
-    # # fake_B_1 = model.netG(data["A"])
-    # # fake_B_2 = model.netG(model.real_A)
-
-    # # comparison_result = torch.eq(fake_B_1, fake_B_2)
-    
-    # # allclose = torch.allclose(fake_B_1, fake_B_2)
-    # # print("-")
-    # # print("allclose", allclose)
-    # # print("-")    
-    
-    
-    
-    
-    # # image = cv2.imread(image_path, 0)
-
-    # # a, b = split_image(image)
-    
-    
-    # # with torch.no_grad():
-    # #     model.eval()
-    # #     fake_B = model.netG(a_tensor)
-    # #     # print(fake_B[0, 0, 56, :10])
+    #     a, b = read_from_PIL(image_path)
+    #     # a = Image.open(image_path)
+    #     a.save(f"{folder_dir}/{base_name[:-4]}.png")
         
-    # #     fake_B_RL = fake_B / 2.0 + 0.5
-    # #     fake_B_RL = model.agent.DQN(fake_B_RL)    
-    # #     action = fake_B_RL.argmax(1)[0].item()
-    # #     # print(fake_B_RL[0, :10])
-    # #     # print("-")
-    # #     # print("aciton", action)
-    # #     # print("-")
+    #     a_tensor = get_tensor(a)
+    #     fake_B_tensor, displacement = model.S2R_displacement(a_tensor)  
+    #     fake_B_img = util.tensor2im(fake_B_tensor.cpu())
+    #     # fake_B_img = reverse_transform(fake_B_tensor.cpu())
+        
+    #     util.save_image(fake_B_img, f"{folder_dir}/{base_name[:-4]}_fake_B.png")
+    #     # cv2.imwrite(f"{folder_dir}/{base_name[:-4]}_fake_B.png", fake_B_img)
+    #     break
+
     
-    
-    # # r, t, p = spread_index_into_spherical(action, 
-    # #                                         theta_num=8, 
-    # #                                         shell_unit_length=0.025)
-    # # displacement = spherical_to_cartesian(r, t, p)
-    # # print(displacement)  
-    
-    # # displacement = model.S2R_displacement(a_tensor)  
-    # # print(displacement)  
-    # # model.eval()
-    # # while True:
-    # #     frame = get_frame()
-    # #     frame_tensor = get_tensor(frame)
     
     # # =======================================================================================
     
     
 
-    # # initialize logger
-    # if opt.use_wandb:
-    #     wandb_run = wandb.init(project=opt.wandb_project_name, name=opt.name, config=opt) if not wandb.run else wandb.run
-    #     wandb_run._label(repo='CycleGAN-and-pix2pix')
+    # initialize logger
+    if opt.use_wandb:
+        wandb_run = wandb.init(project=opt.wandb_project_name, name=opt.name, config=opt) if not wandb.run else wandb.run
+        wandb_run._label(repo='CycleGAN-and-pix2pix')
 
-    # # create a website
-    # web_dir = os.path.join(opt.results_dir, opt.name, '{}_{}'.format(opt.phase, opt.epoch))  # define the website directory
-    # if opt.load_iter > 0:  # load_iter is 0 by default
-    #     web_dir = '{:s}_iter{:d}'.format(web_dir, opt.load_iter)
-    # print('creating web directory', web_dir)
-    # webpage = html.HTML(web_dir, 'Experiment = %s, Phase = %s, Epoch = %s' % (opt.name, opt.phase, opt.epoch))
-    # # test with eval mode. This only affects layers like batchnorm and dropout.
-    # # For [pix2pix]: we use batchnorm and dropout in the original pix2pix. You can experiment it with and without eval() mode.
-    # # For [CycleGAN]: It should not affect CycleGAN as CycleGAN uses instancenorm without dropout.
-    # if opt.eval:
-    #     model.eval()
-    # for i, data in enumerate(dataset):
-    #     # if i >= opt.num_test:  # only apply our model to opt.num_test images.
-    #     if i >= 1:  # only apply our model to opt.num_test images.
-    #         break
-    #     model.set_input(data)  # unpack data from data loader
-    #     model.test()           # run inference       
-    #     print(data["A_paths"][0] == image_path)
-    #     print(data["A"].shape)
-    #     print(a_tensor.shape)
+    # create a website
+    web_dir = os.path.join(opt.results_dir, opt.name, '{}_{}'.format(opt.phase, opt.epoch))  # define the website directory
+    if opt.load_iter > 0:  # load_iter is 0 by default
+        web_dir = '{:s}_iter{:d}'.format(web_dir, opt.load_iter)
+    print('creating web directory', web_dir)
+    webpage = html.HTML(web_dir, 'Experiment = %s, Phase = %s, Epoch = %s' % (opt.name, opt.phase, opt.epoch))
+    # test with eval mode. This only affects layers like batchnorm and dropout.
+    # For [pix2pix]: we use batchnorm and dropout in the original pix2pix. You can experiment it with and without eval() mode.
+    # For [CycleGAN]: It should not affect CycleGAN as CycleGAN uses instancenorm without dropout.
+    if opt.eval:
+        model.eval()
+    for i, data in enumerate(dataset):
+        if i >= opt.num_test:  # only apply our model to opt.num_test images.
+        # if i >= 1:  # only apply our model to opt.num_test images.
+            break
+        model.set_input(data)  # unpack data from data loader
+        model.test()           # run inference       
+        # print(data["A_paths"][0] == image_path)
+        # print(data["A"].shape)
+        # print(a_tensor.shape)
         
-    #     tensor_1 = data["A"].cpu()
-    #     tensor_2 = a_tensor
+        # tensor_1 = data["A"].cpu()
+        # tensor_2 = a_tensor
         
-    #     comparison_result = torch.eq(tensor_1, tensor_2)
-    #     print(comparison_result)
+        # comparison_result = torch.eq(tensor_1, tensor_2)
+        # print(comparison_result)
         
-    #     allclose = torch.allclose(tensor_1, tensor_2)
-    #     print("-")
-    #     print("allclose", allclose)
-    #     print("-")  
+        # allclose = torch.allclose(tensor_1, tensor_2)
+        # print("-")
+        # print("allclose", allclose)
+        # print("-")  
         
-    #     # 找到等於 False 的位置
-    #     false_positions = torch.nonzero(~comparison_result)
+        # # 找到等於 False 的位置
+        # false_positions = torch.nonzero(~comparison_result)
 
-    #     # 計算 False 的數量
-    #     num_false = (~comparison_result).sum()
+        # # 計算 False 的數量
+        # num_false = (~comparison_result).sum()
 
-    #     print("比較結果:")
-    #     print(comparison_result)
+        # print("比較結果:")
+        # print(comparison_result)
 
-    #     print("\n等於 False 的位置:")
-    #     print(false_positions)
+        # print("\n等於 False 的位置:")
+        # print(false_positions)
 
-    #     print("\nFalse 的數量:")
-    #     print(num_false)        
+        # print("\nFalse 的數量:")
+        # print(num_false)        
         
         
         
-    #     fake_B_img_model = reverse_transform(model.fake_B.cpu())
+        # fake_B_img_model = util.tensor2im(model.fake_B.cpu())
+        
     
-    #     cv2.imwrite('fake_B_img_model.png', fake_B_img_model)
+        # cv2.imwrite(f'{folder_dir}/fake_B_img_model.png', fake_B_img_model)
          
         
-    #     model.compute_loss()
-    #     visuals = model.get_current_visuals()  # get image results
-    #     img_path = model.get_image_paths()     # get image paths
-    #     if i % 5 == 0:  # save images to an HTML file
-    #         print('processing (%04d)-th image... %s' % (i, img_path))
-    #     save_images(webpage, visuals, img_path, aspect_ratio=opt.aspect_ratio, width=opt.display_winsize, use_wandb=opt.use_wandb)
+        model.compute_loss()
+        visuals = model.get_current_visuals()  # get image results
+        img_path = model.get_image_paths()     # get image paths
+        if i % 5 == 0:  # save images to an HTML file
+            print('processing (%04d)-th image... %s' % (i, img_path))
+        save_images(webpage, visuals, img_path, aspect_ratio=opt.aspect_ratio, width=opt.display_winsize, use_wandb=opt.use_wandb)
     
     
-    # # ----------------------------------------------------------------------------
-    # # save_txt(opt, model.losses_list, model.same_list)
-    # # print(model.losses_list)
-    # # print(model.same_list)
-    # # print("--------------------------------------")
-    # # print("loss mean: \t", np.mean(model.losses_list), "\n"
-    # #       "loss std:  \t", np.std(model.losses_list), "\n"
-    # #       "loss max:  \t", np.max(model.losses_list), "\n"
-    # #       "loss min:  \t", np.min(model.losses_list), "\n"
-    # #       "loss lens: \t", len(model.losses_list), "\n"
-    # #     #   "success rate:\t", np.mean(model.same_list)
-    # #       )
-    # # print("--------------------------------------")
-    # # webpage.save()  # save the HTML
+    # ----------------------------------------------------------------------------
+    save_txt(opt, model.losses_list, model.same_list)
+    save_loss_png(model.losses_list)
+    # print(model.losses_list)
+    # print(model.same_list)
+    print("--------------------------------------")
+    print("loss mean: \t", np.mean(model.losses_list), "\n"
+          "loss std:  \t", np.std(model.losses_list), "\n"
+          "loss max:  \t", np.max(model.losses_list), "\n"
+          "loss min:  \t", np.min(model.losses_list), "\n"
+          "loss lens: \t", len(model.losses_list), "\n"
+          "success rate:\t", np.mean(model.same_list)
+          )
+    print("--------------------------------------")
+    webpage.save()  # save the HTML

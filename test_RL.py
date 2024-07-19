@@ -33,26 +33,53 @@ from models import create_model
 from util.visualizer import save_images
 from util import html
 import numpy as np
+import torch
+import matplotlib.pyplot as plt
 
 try:
     import wandb
 except ImportError:
     print('Warning: wandb package cannot be found. The option "--use_wandb" will result in error.')
 
+# ------------------------------------------------------------------
+# random seed 
+def setup_seed(seed):
+    # random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.benchmark = True
+    torch.backends.cudnn.deterministic = True
+
+setup_seed(525)
+# ------------------------------------------------------------------
+
 
 def save_txt(opt, losses_list, same_list):
-    txt_dir = f"./results/{opt.name}/test_result.txt"
-    with open(txt_dir, "a") as txt_file:
-        txt_file.write("--------------------------------------\n")
-        txt_file.write(f"is_added_DQN: \t{opt.is_added_DQN}\n")
-        txt_file.write(f"loss mean:    \t{np.mean(losses_list)}\n")
-        txt_file.write(f"loss std:     \t{np.std(losses_list)}\n")
-        txt_file.write(f"loss lens:    \t{len(losses_list)}\n")
-        txt_file.write(f"loss max:     \t{np.max(losses_list)}\n")
-        txt_file.write(f"loss min:     \t{np.min(losses_list)}\n")
-        txt_file.write(f"success rate: \t{np.mean(same_list)}\n")
-        txt_file.write(f"loss lens: \t\t{len(losses_list)}\n")
-        txt_file.write("--------------------------------------\n")
+    txt_list = [f"./results/{opt.name}/test_result.txt", f"./results/{opt.name}/test_latest/test_result.txt"]
+    for txt_dir in txt_list:
+        with open(txt_dir, "a") as txt_file:
+            txt_file.write("--------------------------------------\n")
+            txt_file.write(f"is_added_DQN: \t{opt.is_added_DQN}\n")
+            txt_file.write(f"loss mean:    \t{np.mean(losses_list)}\n")
+            txt_file.write(f"loss std:     \t{np.std(losses_list)}\n")
+            txt_file.write(f"loss lens:    \t{len(losses_list)}\n")
+            txt_file.write(f"loss max:     \t{np.max(losses_list)}\n")
+            txt_file.write(f"loss min:     \t{np.min(losses_list)}\n")
+            txt_file.write(f"success rate: \t{np.mean(same_list)}\n")
+            txt_file.write(f"loss lens: \t\t{len(losses_list)}\n")
+            txt_file.write("--------------------------------------\n")
+
+# ----------------------------------------------------------------------------
+def save_loss_png(loss:list):
+    plt.figure(figsize=(10, 6))
+    plt.hist(loss, bins=30, alpha=0.75, edgecolor='black')
+    plt.title('Distribution of Sample Data')
+    plt.xlabel('Value')
+    plt.ylabel('Frequency')
+    plt.grid(True)
+    plt.savefig(f"./results/{opt.name}/test_latest/loss.png")
     
 
 if __name__ == '__main__':
@@ -96,6 +123,7 @@ if __name__ == '__main__':
         save_images(webpage, visuals, img_path, aspect_ratio=opt.aspect_ratio, width=opt.display_winsize, use_wandb=opt.use_wandb)
     
     save_txt(opt, model.losses_list, model.same_list)
+    save_loss_png(model.losses_list)
     # print(model.losses_list)
     # print(model.same_list)
     print("--------------------------------------")
