@@ -203,10 +203,10 @@ def intL2DRA(i):
 if __name__ == "__main__":
     # ----------------------------------------------------
     # some setting
-    is_save = True
+    is_save = False
     # ----------------------------------------------------
     # read position csv 
-    csv_dir = r"\\140.114.141.95\nas\111\111033631_Yen\ARM\capture_images_sim\Jun19_H04_M36_S59_010_010_shuffle_True\position.csv"
+    csv_dir = r"\\140.114.141.95\nas\111\111033631_Yen\ARM\capture_images_sim\Jul16_H14_M43_S14_010_0100_882_882\position.csv"
     # csv_dir = r"\\140.114.141.95\nas\111\111033631_Yen\ARM\capture_images_sim\cube_points__.csv"
     csv_name = os.path.basename(os.path.dirname(csv_dir))
     df = read_csv(csv_dir)

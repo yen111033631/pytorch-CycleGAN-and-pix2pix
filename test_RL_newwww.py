@@ -26,18 +26,20 @@ See options/base_options.py and options/test_options.py for more test options.
 See training and test tips at: https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/blob/master/docs/tips.md
 See frequently asked questions at: https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/blob/master/docs/qa.md
 """
-import os
+import os, glob
 from options.test_options import TestOptions
 from data import create_dataset
 from models import create_model
 from util.visualizer import save_images
 from util import html
+from util import util
 import numpy as np
 from torchvision import transforms
 import cv2, torch
 from PIL import Image
 import rs
 import time
+import pandas as pd
 
 try:
     import wandb
@@ -105,7 +107,7 @@ def add_black_border_to_square_PIL(image):
     return new_image
 
 def read_from_PIL(image_path):
-    AB = Image.open(image_path).convert('L')
+    AB = Image.open(image_path)
     # # split AB image into A and B
     w, h = AB.size
     w2 = int(w / 2)
@@ -183,13 +185,29 @@ if __name__ == '__main__':
     model = create_model(opt)      # create a model given opt.model and other options
     model.setup(opt)               # regular setup: load and print networks; create schedulers
     
-    model.eval()
-
+    if opt.eval:
+        model.eval()
     
     # =======================================================================================
     my_cam = rs.Cam()
     Mem = rs.MemoryCommunicator()
     address = 0x1100
+    
+    csv_dir = r"\\140.114.141.95\nas\111\111033631_Yen\ARM\capture_images_sim\Jul16_H14_M43_S14_010_0100_882_882\position.csv"
+    # csv_dir = r"\\140.114.141.95\nas\111\111033631_Yen\ARM\capture_images_sim\cube_points__.csv"
+    csv_name = os.path.basename(os.path.dirname(csv_dir))
+    df = pd.read_csv(csv_dir, index_col=0)
+    
+    cube_position = df.iloc[0][-4: -1]
+    cube_position = [x * 1000 for x in cube_position]
+    print("cube_position", cube_position)
+    p = [*cube_position[:2], 100]
+    
+    j = [0] * 6
+
+    # Mem.write_data([1, *j, *p], address)
+
+    
     i = 0
     while True:
         # get frame
@@ -202,6 +220,7 @@ if __name__ == '__main__':
 
         # position = get_current_position()
         position = Mem.read_data(3, address=0x00F0)
+        # position = [1, 2, 3]
         print(position)
 
         start = time.time()
@@ -210,14 +229,14 @@ if __name__ == '__main__':
         # get tensor
         image_tensor = get_tensor(image, size=256)
         fake_B_tensor, displacement = model.S2R_displacement(image_tensor) 
-        fake_B_img = reverse_transform(fake_B_tensor.cpu())
+        fake_B_img = util.tensor2im(fake_B_tensor.cpu())
         # print(displacement)
         end = time.time()
         print("spend time:", round(end-start, 5))
         
-        # cv2.imshow('RealSense', frame)
-        # cv2.imshow('fake_B_img', fake_B_img)
-        # cv2.waitKey(1)
+        cv2.imshow('RealSense', frame)
+        cv2.imshow('fake_B_img', fake_B_img)
+        cv2.waitKey(1)
         # cv2.destroyAllWindows()
 
         next_position = position + displacement
@@ -227,25 +246,27 @@ if __name__ == '__main__':
         j = [0] * 6
 
         Mem.write_data([1, *j, *next_position], address)
-        time.sleep(0.1)
+        time.sleep(0.01)
 
         
         if i > 20:
+            Mem.write_data([-1], address)
             break
         i += 1
     # =======================================================================================
-    # # image_path = "/home/yen/mount/nas/111/111033631_Yen/ARM/GAN_images/all/test/img_0804.jpg"
+    # image_path = "/home/yen/mount/nas/111/111033631_Yen/ARM/GAN_images/all/test/img_0804.jpg"
     # image_path = "/home/yen/mount/nas/111/111033631_Yen/ARM/GAN_images/_010_010_010_shuffle_False_502_36/test/img_0002.jpg"
     # a, b = read_from_PIL(image_path)
     # image_path = "/home/yen/mount/nas/111/111033631_Yen/ARM/capture_images_real/Jun17_H15_M21_S56_010_010_010_shuffle_False_502_36_001/img_0000.jpg"
-    # # # ab = cv2.imread(image_path, 0)
-    # # # a, b = split_image(ab)
+    # # ab = cv2.imread(image_path, 0)
+    # # a, b = split_image(ab)
     
-    # # # transform = get_tensor()
+    # # transform = get_tensor()
     
-    # --
     
     # image_path = "/home/yen/mount/nas/111/111033631_Yen/ARM/capture_images_real/images/Jul02_H22_M27_S59/img_1_color.bmp"
+    # image_path = "/home/yen/mount/nas/111/111033631_Yen/ARM/capture_images_real/Jul16_H14_M43_S14_010_0100_882_882_002/img_0000.bmp"
+    # image_path = r"\\140.114.141.95\nas\111\111033631_Yen\ARM\capture_images_real\Jul16_H14_M43_S14_010_0100_882_882_002\img_0000.bmp"
     # a = Image.open(image_path)
     # a.save('real_A_img.jpg')
     # a_tensor = get_tensor(a)
@@ -254,6 +275,28 @@ if __name__ == '__main__':
     # fake_B_img = reverse_transform(fake_B_tensor.cpu())
     
     # cv2.imwrite('fake_B_img.jpg', fake_B_img)
+    
+    
+    # image_path_list = glob.glob(r"\\140.114.141.95\nas\111\111033631_Yen\ARM\GAN_images\_010_0100_882_882\test\*.jpg")
+    # folder_name =os.path.basename(os.path.dirname(image_path_list[0]))
+    
+    # folder_dir = f"./test_newww/{folder_name}__"
+    # os.makedirs(folder_dir, exist_ok=True)
+    
+    # for i, image_path in enumerate(image_path_list):
+    #     base_name = os.path.basename(image_path)
+    #     print(i, os.path.basename(image_path))
+        
+        
+    #     a, b = read_from_PIL(image_path)
+    #     # a = Image.open(image_path)
+    #     a.save(f"{folder_dir}/{base_name[:-4]}.png")
+        
+    #     a_tensor = get_tensor(a)
+    #     fake_B_tensor, displacement = model.S2R_displacement(a_tensor)  
+    #     fake_B_img = reverse_transform(fake_B_tensor.cpu())
+        
+    #     cv2.imwrite(f"{folder_dir}/{base_name[:-4]}_fake_B.png", fake_B_img)
     
 
     

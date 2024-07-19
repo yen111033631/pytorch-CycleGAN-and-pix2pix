@@ -3,7 +3,7 @@
 setlocal enabledelayedexpansion
 
 rem ----------------------------------
-set model_name_list="S2R_256_cam_shift_input3_DQN1_netD1_G_GAN_G_L1"
+set model_name_list="S2R_256_arm_trajectory_3090_input3_DQN1_netD1_G_GAN_G_L1"
 rem ----------------------------------
 rem add DQN, netG_loss_setting "G_GAN+G_L1"
 
@@ -19,8 +19,8 @@ for %%m in (%model_name_list%) do (
                     --output_nc 1 ^
                     --name "%%m" ^
                     --is_added_DQN 1 ^
-                    --which_DQN "007" ^
-                    --gpu_ids 0
+                    --which_DQN "010" ^
+                    --gpu_ids -1
 )
 
 endlocal
