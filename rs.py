@@ -51,11 +51,14 @@ class Cam:
         color_frame = frames.get_color_frame()
 
         depth_image = np.asanyarray(depth_frame.get_data())
-        depth_image = cv2.flip(depth_image, -1)
+        self.depth_image = cv2.flip(depth_image, -1)
         color_image = np.asanyarray(color_frame.get_data())
-        color_image = cv2.flip(color_image, -1)        
+        self.color_image = cv2.flip(color_image, -1)     
+        
+        depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(self.depth_image, alpha=0.03), cv2.COLORMAP_JET)
+        self.images = np.hstack((self.color_image, depth_colormap))          
 
-        return color_image
+        return self.color_image
 
 
     def capture_pic(self, image_type=["color"], image_name=None):

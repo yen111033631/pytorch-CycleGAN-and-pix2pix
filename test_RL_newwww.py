@@ -33,6 +33,7 @@ from models import create_model
 from util.visualizer import save_images
 from util import html
 from util import util
+from util.others import *
 import numpy as np
 from torchvision import transforms
 import cv2, torch
@@ -40,138 +41,14 @@ from PIL import Image
 import rs
 import time
 import pandas as pd
+import threading
 
 try:
     import wandb
 except ImportError:
     print('Warning: wandb package cannot be found. The option "--use_wandb" will result in error.')
 
-# ------------------------------------------------------------------
-# random seed 
-def setup_seed(seed):
-    # random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
-    torch.backends.cudnn.benchmark = True
-    torch.backends.cudnn.deterministic = True
-
 setup_seed(525)
-# ------------------------------------------------------------------
-
-
-def save_txt(opt, losses_list, same_list):
-    txt_dir = f"./results/{opt.name}/test_result.txt"
-    with open(txt_dir, "a") as txt_file:
-        txt_file.write("--------------------------------------\n")
-        txt_file.write(f"is_added_DQN: \t{opt.is_added_DQN}\n")
-        txt_file.write(f"loss mean:    \t{np.mean(losses_list)}\n")
-        txt_file.write(f"loss std:     \t{np.std(losses_list)}\n")
-        txt_file.write(f"loss lens:    \t{len(losses_list)}\n")
-        txt_file.write(f"loss max:     \t{np.max(losses_list)}\n")
-        txt_file.write(f"loss min:     \t{np.min(losses_list)}\n")
-        txt_file.write(f"success rate: \t{np.mean(same_list)}\n")
-        txt_file.write(f"loss lens: \t\t{len(losses_list)}\n")
-        txt_file.write("--------------------------------------\n")
-
-# ----------------------------------------------------------------------------
-def split_image(image):
-    # image = cv2.imread(image_path, 0)
-    a = image[:, :image.shape[0]]
-    b = image[:, image.shape[0]:]
-    return a, b
-
-def add_black_border_to_square_PIL(image):
-    """
-    將輸入圖像補上黑邊，使其變成正方形
-    :param image: PIL.Image 圖像對象
-    :return: 補黑邊後的正方形圖像
-    """
-    # 獲取原始照片的尺寸
-    width, height = image.size
-    
-    # 計算新照片的邊長（取原始照片的較長邊）
-    new_size = max(width, height)
-    
-    # 創建一個黑色的背景圖像
-    new_image = Image.new("RGB", (new_size, new_size), (0, 0, 0))
-
-    # 計算原始照片在新照片中的起始位置
-    x_offset = (new_size - width) // 2
-    y_offset = (new_size - height) // 2
-
-    # 將原始照片粘貼到黑色背景圖像的中央
-    new_image.paste(image, (x_offset, y_offset))
-
-    return new_image
-
-def read_from_PIL(image_path):
-    AB = Image.open(image_path)
-    # # split AB image into A and B
-    w, h = AB.size
-    w2 = int(w / 2)
-    A = AB.crop((0, 0, w2, h))
-    B = AB.crop((w2, 0, w, h))
-    return A, B
-
-def get_tensor(image, size=256):
-    # 定義變換管道
-    transform = transforms.Compose([
-        transforms.Lambda(add_black_border_to_square_PIL),
-        # transforms.Grayscale(1),
-        transforms.Resize((size, size)),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.5], std=[0.5]),
-        transforms.Lambda(lambda x: x.unsqueeze(0)),
-    ])
-    return transform(image)
-
-def reverse_transform(transformed_image, original_size=None):
-    """
-    Reverses the transformations applied to the image and displays it.
-
-    Parameters:
-    - transformed_image (torch.Tensor): The transformed image tensor.
-    - original_size (tuple): The original size of the image (height, width). Default is None.
-
-    Returns:
-    - None
-    """
-    # Step 1: Remove the extra dimension
-    image_tensor = transformed_image.squeeze(0)
-
-    # Step 2: Reverse normalization
-    inverse_normalize = transforms.Normalize(
-        mean=[-0.5 / 0.5], std=[1 / 0.5]
-    )
-    image_tensor = inverse_normalize(image_tensor)
-
-    # Step 3: Convert the tensor to a NumPy array
-    image_np = image_tensor.squeeze().numpy() * 255  # Scale back to [0, 255]
-    image_np = image_np.astype(np.uint8)
-    
-    return image_np
-
-
-def cv2_to_pil(cv2_image):
-    """
-    將 OpenCV 圖像轉換為 PIL 圖像
-    :param cv2_image: 使用 OpenCV (cv2) 讀取或處理的 numpy 圖像
-    :return: PIL.Image 圖像對象
-    """
-    # 檢查圖像是否為灰階
-    if len(cv2_image.shape) == 2:
-        # 灰階圖像直接轉換
-        pil_image = Image.fromarray(cv2_image)
-    else:
-        # 彩色圖像需要轉換顏色通道順序 (從 BGR 轉為 RGB)
-        cv2_image_rgb = cv2.cvtColor(cv2_image, cv2.COLOR_BGR2RGB)
-        pil_image = Image.fromarray(cv2_image_rgb)
-    
-    return pil_image
-    
-# ----------------------------------------------------------------------------
 
 if __name__ == '__main__':
     opt = TestOptions().parse()  # get test options
@@ -193,66 +70,137 @@ if __name__ == '__main__':
     Mem = rs.MemoryCommunicator()
     address = 0x1100
     
-    csv_dir = r"\\140.114.141.95\nas\111\111033631_Yen\ARM\capture_images_sim\Jul16_H14_M43_S14_010_0100_882_882\position.csv"
+    csv_dir = r"\\140.114.141.95\nas\111\111033631_Yen\ARM\capture_images_sim\Jul16_H14_M43_S14_010_0100_882_882\cube_points__.csv"
     # csv_dir = r"\\140.114.141.95\nas\111\111033631_Yen\ARM\capture_images_sim\cube_points__.csv"
     csv_name = os.path.basename(os.path.dirname(csv_dir))
-    df = pd.read_csv(csv_dir, index_col=0)
+    df = pd.read_csv(csv_dir)
     
-    cube_position = df.iloc[0][-4: -1]
-    cube_position = [x * 1000 for x in cube_position]
-    print("cube_position", cube_position)
-    p = [*cube_position[:2], 100]
+    # 創建一個事件對象
+    stop_event = threading.Event()
+
+    # 創建並啟動線程
+    thread = threading.Thread(target=worker, args=(my_cam, stop_event,))
+    thread.start()
+    time.sleep(1)
+
+
     
-    j = [0] * 6
-
-    # Mem.write_data([1, *j, *p], address)
-
     
-    i = 0
-    while True:
-        # get frame
-        frame = my_cam.get_frame()
-
-        # cv2.imshow('RealSense', frame)
-        # cv2.waitKey(0)
-        # cv2.destroyAllWindows()
+    
+    success_list = []
+    for k in range(1):
+        cube_position = df.iloc[3]
+        cube_position__ = [x * 1000 for x in cube_position]
+        print("cube_position", cube_position)
+        p = [*cube_position__[:2], 100]
         
-
-        # position = get_current_position()
-        position = Mem.read_data(3, address=0x00F0)
-        # position = [1, 2, 3]
-        print(position)
-
-        start = time.time()
-        # transfer cv2 to PIL
-        image = cv2_to_pil(frame)
-        # get tensor
-        image_tensor = get_tensor(image, size=256)
-        fake_B_tensor, displacement = model.S2R_displacement(image_tensor) 
-        fake_B_img = util.tensor2im(fake_B_tensor.cpu())
-        # print(displacement)
-        end = time.time()
-        print("spend time:", round(end-start, 5))
-        
-        cv2.imshow('RealSense', frame)
-        cv2.imshow('fake_B_img', fake_B_img)
-        cv2.waitKey(1)
-        # cv2.destroyAllWindows()
-
-        next_position = position + displacement
-        next_position = [x * 1000 for x in next_position]
-        # print(next_position)
-
         j = [0] * 6
 
-        Mem.write_data([1, *j, *next_position], address)
-        time.sleep(0.01)
+        Mem.write_data([2, *j, *p], address)
+        detect_y()
+        Mem.write_data([3], address)
+        time.sleep(2)
+        
+        
+        # while True:
+            # frame = my_cam.color_image
+            # cv2.namedWindow('RealSensess', cv2.WINDOW_AUTOSIZE)
+            # cv2.imshow('RealSensess', frame)
+            # key = cv2.waitKey(1)
+            # if key & 0xFF == ord('y') or key == 27:
+            #     cv2.destroyAllWindows()
+            #     Mem.write_data([3], address)
+            #     time.sleep(3)
+            #     break
+            
+            # if cv2.waitKey(1) & 0xFF == ord('y'):
 
         
-        if i > 20:
-            Mem.write_data([-1], address)
-            break
-        i += 1
+        i = 0
+        while True:
+            # get frame
+            frame = my_cam.color_image
+
+            # position = get_current_position()
+            # position = Mem.read_data(3, address=0x00F0)
+            # position = [1, 2, 3]
+            # print(position)
+
+            start = time.time()
+            # transfer cv2 to PIL
+            image = cv2_to_pil(frame)
+            # get tensor
+            image_tensor = get_tensor(image, size=256)
+            fake_B_tensor, displacement = model.S2R_displacement(image_tensor) 
+            fake_B_img = util.tensor2im(fake_B_tensor.cpu())
+            # print(displacement)
+            end = time.time()
+            print("spend time:", round(end-start, 5))
+            
+            # cv2.imshow('RealSense', frame)
+            cv2.imshow('fake_B_img', fake_B_img)
+            cv2.waitKey(1)
+            # cv2.destroyAllWindows()
+
+            position = Mem.read_data(3, address=0x00F0)
+            next_position = position + displacement
+            
+            # if i == 1:
+            #     # next_position = [0.24,-0.3, 0.199]
+            #     next_position = [0.112151, -0.378836, 0.18000699]
+            
+            print(i, next_position)
+            if not(check_next_position_is_safe(next_position)):
+                is_success = -1
+                print("not safe")
+                Mem.write_data([3], address)
+                break
+            
+            is_success = check_is_success(next_position, cube_position)
+            
+            next_position__ = [x * 1000 for x in next_position]
+            # print(next_position)
+
+            j = [0] * 6
+
+            Mem.write_data([1, *j, *next_position__], address)
+            time.sleep(0.01)
+            # while True:
+            #     data = Mem.read_data(1, address=address)
+            #     if data[0] == 10: 
+            #         break
+            
+
+            
+            if i > 100 or is_success:
+                # Mem.write_data([3], address)
+                if is_success: 
+                    print("success!")
+                    Mem.write_data([11, *j, *next_position__], address)
+                    time.sleep(0.1)
+                    while True:
+                        data = Mem.read_data(1, address=address)
+                        if data[0] == 20: 
+                            break
+                time.sleep(5)
+                break
+            i += 1
+        
+        is_success = 0 if is_success == -1 else 1
+        success_list.append(is_success)
+    print(success_list)
+    print(sum(success_list) / len(success_list))
+    
+    Mem.write_data([-1], address)
+    time.sleep(0.1)
+        
+        
+    # 發送停止信號
+    print("Sending stop signal...")
+    stop_event.set()        
+        
+        
+        
     # =======================================================================================
     # image_path = "/home/yen/mount/nas/111/111033631_Yen/ARM/GAN_images/all/test/img_0804.jpg"
     # image_path = "/home/yen/mount/nas/111/111033631_Yen/ARM/GAN_images/_010_010_010_shuffle_False_502_36/test/img_0002.jpg"
