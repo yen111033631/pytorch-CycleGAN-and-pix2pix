@@ -117,6 +117,10 @@ class MemoryCommunicator:
             data.append(num * 10**-6)
         
         return data      
+    
+    def get_arm_position(self):
+        self.arm_position = self.read_data(3, address=0x00F0)
+        return self.arm_position
 # --------------------------------------
 
 

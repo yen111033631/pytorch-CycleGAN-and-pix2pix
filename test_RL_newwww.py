@@ -79,10 +79,9 @@ if __name__ == '__main__':
     stop_event = threading.Event()
 
     # 創建並啟動線程
-    thread = threading.Thread(target=worker, args=(my_cam, stop_event,))
-    thread.start()
+    thread1 = threading.Thread(target=get_frame, args=(my_cam, stop_event,))
+    thread1.start()
     time.sleep(1)
-
 
     
     
@@ -101,23 +100,21 @@ if __name__ == '__main__':
         Mem.write_data([3], address)
         time.sleep(2)
         
-        
-        # while True:
-            # frame = my_cam.color_image
-            # cv2.namedWindow('RealSensess', cv2.WINDOW_AUTOSIZE)
-            # cv2.imshow('RealSensess', frame)
-            # key = cv2.waitKey(1)
-            # if key & 0xFF == ord('y') or key == 27:
-            #     cv2.destroyAllWindows()
-            #     Mem.write_data([3], address)
-            #     time.sleep(3)
-            #     break
-            
-            # if cv2.waitKey(1) & 0xFF == ord('y'):
+        # 創建一個事件對象
+        success_event = threading.Event()
+        pause_event = threading.Event()
+        target_position = cube_position.copy()
+        target_position[-1] = target_position[-1] + 0.1
+        success_distance = 0.05
+
+        # 創建並啟動線程
+        thread2 = threading.Thread(target=detect_success, args=(success_event, pause_event, target_position, success_distance, Mem,))
+        thread2.start()        
+        time.sleep(2)
 
         
         i = 0
-        while True:
+        while not success_event.is_set():
             # get frame
             frame = my_cam.color_image
 
@@ -142,7 +139,7 @@ if __name__ == '__main__':
             cv2.waitKey(1)
             # cv2.destroyAllWindows()
 
-            position = Mem.read_data(3, address=0x00F0)
+            position = Mem.arm_position
             next_position = position + displacement
             
             # if i == 1:
@@ -153,17 +150,24 @@ if __name__ == '__main__':
             if not(check_next_position_is_safe(next_position)):
                 is_success = -1
                 print("not safe")
+                pause_event.set()
+                time.sleep(.2)
                 Mem.write_data([3], address)
+                pause_event._flag = False
+                success_event.set()
                 break
             
-            is_success = check_is_success(next_position, cube_position)
+            # is_success = check_is_success(next_position, cube_position)
+            # if is_success: print("aha")
             
             next_position__ = [x * 1000 for x in next_position]
-            # print(next_position)
 
             j = [0] * 6
 
+            pause_event.set()
+            time.sleep(.2)
             Mem.write_data([1, *j, *next_position__], address)
+            pause_event._flag = False
             time.sleep(0.01)
             # while True:
             #     data = Mem.read_data(1, address=address)
@@ -172,21 +176,22 @@ if __name__ == '__main__':
             
 
             
-            if i > 100 or is_success:
+            if i > 100:
                 # Mem.write_data([3], address)
-                if is_success: 
-                    print("success!")
-                    Mem.write_data([11, *j, *next_position__], address)
-                    time.sleep(0.1)
-                    while True:
-                        data = Mem.read_data(1, address=address)
-                        if data[0] == 20: 
-                            break
+                # if is_success: 
+                #     print("success!")
+                #     Mem.write_data([11, *j, *next_position__], address)
+                #     time.sleep(0.1)
+                #     while True:
+                #         data = Mem.read_data(1, address=address)
+                #         if data[0] == 20: 
+                #             break
                 time.sleep(5)
                 break
             i += 1
         
-        is_success = 0 if is_success == -1 else 1
+        print("out")
+        is_success = 1 if success_event.is_set() else is_success
         success_list.append(is_success)
     print(success_list)
     print(sum(success_list) / len(success_list))
@@ -198,7 +203,7 @@ if __name__ == '__main__':
     # 發送停止信號
     print("Sending stop signal...")
     stop_event.set()        
-        
+    # cv2.destroyAllWindows()
         
         
     # =======================================================================================

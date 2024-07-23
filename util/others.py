@@ -204,7 +204,7 @@ def check_is_success(position_xyz, target_xyz, lift_height=0.12, success_distanc
         return False
     
     
-def worker(my_cam, event):
+def get_frame(my_cam, event):
     fourcc = cv2.VideoWriter_fourcc(*'XVID')
     out = cv2.VideoWriter('output.avi', fourcc, 30.0, (1280, 720))
     
@@ -217,8 +217,24 @@ def worker(my_cam, event):
         # 檢查是否按下 'q' 鍵來退出
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
-    print("Worker received stop signal.")    
+    print("get_frame received stop signal.")    
     out.release()  
+    
+def detect_success(event, pause_event, target_position, success_distance, Mem):
+    while not event.is_set():
+        arm_position = Mem.get_arm_position()
+        # print(arm_position)
+        
+        dis = calculate_distance(arm_position, target_position)
+        
+        if dis <= success_distance:
+            print("Success from thread!")
+            event.set()
+            break 
+        while pause_event.is_set():
+            pass               
+        
+    print("Worker received stop signal.")
     
 
 
