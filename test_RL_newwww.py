@@ -87,8 +87,8 @@ if __name__ == '__main__':
     
     
     success_list = []
-    for k in range(1):
-        cube_position = df.iloc[3]
+    for k in range(10):
+        cube_position = df.iloc[k]
         cube_position__ = [x * 1000 for x in cube_position]
         print("cube_position", cube_position)
         p = [*cube_position__[:2], 100]
@@ -153,6 +153,7 @@ if __name__ == '__main__':
                 pause_event.set()
                 time.sleep(.2)
                 Mem.write_data([3], address)
+                time.sleep(.01)
                 pause_event._flag = False
                 success_event.set()
                 break
@@ -166,9 +167,13 @@ if __name__ == '__main__':
 
             pause_event.set()
             time.sleep(.2)
-            Mem.write_data([1, *j, *next_position__], address)
+            if success_event.is_set():
+                Mem.write_data([3], address)
+                break
+            else:
+                Mem.write_data([1, *j, *next_position__], address)
+            time.sleep(0.1)
             pause_event._flag = False
-            time.sleep(0.01)
             # while True:
             #     data = Mem.read_data(1, address=address)
             #     if data[0] == 10: 
@@ -189,7 +194,15 @@ if __name__ == '__main__':
                 time.sleep(5)
                 break
             i += 1
+        pause_event.set()
+        Mem.write_data([3], address)
+        while True:
+            data = Mem.read_data(1, address=address)
+            if data[0] == 10: 
+                break
         
+        pause_event._flag = False
+            
         print("out")
         is_success = 1 if success_event.is_set() else is_success
         success_list.append(is_success)
