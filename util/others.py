@@ -3,6 +3,7 @@ from torchvision import transforms
 import cv2, torch
 from PIL import Image
 from pynput import keyboard
+from ikpy.chain import Chain
 
 # ------------------------------------------------------------------
 # random seed 
@@ -254,3 +255,13 @@ def detect_y():
         listener.join()
 
     print("程序已退出。")  
+    
+def read_urdf(urdf_path):
+    return Chain.from_urdf_file(urdf_path)
+
+def check_ik_is_good(chain, target_position, target_orientation=[0, 0, -1], orientation_mode="Z"):
+    ik = chain.inverse_kinematics(target_position, 
+                                  target_orientation, 
+                                  orientation_mode)
+    
+    return ik[-2] <= 0

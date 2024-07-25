@@ -62,6 +62,8 @@ if __name__ == '__main__':
     model = create_model(opt)      # create a model given opt.model and other options
     model.setup(opt)               # regular setup: load and print networks; create schedulers
     
+    DRV_chain = read_urdf("DRV90.urdf")
+    
     if opt.eval:
         model.eval()
     
@@ -84,22 +86,33 @@ if __name__ == '__main__':
     time.sleep(1)
 
     
-    
+    # tem joint
+    j = [0] * 6
     
     success_list = []
     for k in range(10):
+        # ----------------------------------------------------------------
+        # set cube position
         cube_position = df.iloc[k]
         cube_position__ = [x * 1000 for x in cube_position]
         print("cube_position", cube_position)
         p = [*cube_position__[:2], 100]
         
-        j = [0] * 6
-
+        # -----------------
+        # check ik
+        cube_p = cube_position.copy()
+        cube_p[-1] = 0.1
+        print(check_ik_is_good(DRV_chain, cube_p))
+        # -----------------
+        
+        
+        # write data into memory
         Mem.write_data([2, *j, *p], address)
         detect_y()
         Mem.write_data([3], address)
         time.sleep(2)
-        
+        # ----------------------------------------------------------------
+        # detect success distance event
         # 創建一個事件對象
         success_event = threading.Event()
         pause_event = threading.Event()
@@ -108,44 +121,54 @@ if __name__ == '__main__':
         success_distance = 0.05
 
         # 創建並啟動線程
-        thread2 = threading.Thread(target=detect_success, args=(success_event, pause_event, target_position, success_distance, Mem,))
+        thread2 = threading.Thread(target=detect_success, args=(success_event, 
+                                                                pause_event, 
+                                                                target_position, 
+                                                                success_distance, 
+                                                                Mem,
+                                                                ))
         thread2.start()        
         time.sleep(2)
-
-        
+        # ----------------------------------------------------------------
         i = 0
         while not success_event.is_set():
+            # ------------------------------------------------------------
             # get frame
             frame = my_cam.color_image
-
-            # position = get_current_position()
-            # position = Mem.read_data(3, address=0x00F0)
-            # position = [1, 2, 3]
-            # print(position)
-
+            # ------------------------------------------------------------
+            # transfer frame into tensor
             start = time.time()
             # transfer cv2 to PIL
             image = cv2_to_pil(frame)
             # get tensor
             image_tensor = get_tensor(image, size=256)
+            # ------------------------------------------------------------
+            # input tensor into model, output fake_B and displacement
             fake_B_tensor, displacement = model.S2R_displacement(image_tensor) 
             fake_B_img = util.tensor2im(fake_B_tensor.cpu())
             # print(displacement)
             end = time.time()
             print("spend time:", round(end-start, 5))
             
+            # ------------------------------------------------------------
+            # show image
             # cv2.imshow('RealSense', frame)
             cv2.imshow('fake_B_img', fake_B_img)
             cv2.waitKey(1)
             # cv2.destroyAllWindows()
 
+            # ------------------------------------------------------------
+            # get next position
             position = Mem.arm_position
             next_position = position + displacement
+            # ------------------------------------------------------------
             
             # if i == 1:
             #     # next_position = [0.24,-0.3, 0.199]
             #     next_position = [0.112151, -0.378836, 0.18000699]
             
+            # ------------------------------------------------------------
+            # check if next position is safe
             print(i, next_position)
             if not(check_next_position_is_safe(next_position)):
                 is_success = -1
@@ -158,13 +181,9 @@ if __name__ == '__main__':
                 success_event.set()
                 break
             
-            # is_success = check_is_success(next_position, cube_position)
-            # if is_success: print("aha")
-            
-            next_position__ = [x * 1000 for x in next_position]
-
-            j = [0] * 6
-
+            # ------------------------------------------------------------
+            # write data into memory            
+            next_position__ = [x * 1000 for x in next_position]            
             pause_event.set()
             time.sleep(.2)
             if success_event.is_set():
@@ -174,195 +193,36 @@ if __name__ == '__main__':
                 Mem.write_data([1, *j, *next_position__], address)
             time.sleep(0.1)
             pause_event._flag = False
-            # while True:
-            #     data = Mem.read_data(1, address=address)
-            #     if data[0] == 10: 
-            #         break
-            
-
-            
-            if i > 100:
-                # Mem.write_data([3], address)
-                # if is_success: 
-                #     print("success!")
-                #     Mem.write_data([11, *j, *next_position__], address)
-                #     time.sleep(0.1)
-                #     while True:
-                #         data = Mem.read_data(1, address=address)
-                #         if data[0] == 20: 
-                #             break
-                time.sleep(5)
+            # ------------------------------------------------------------
+            # check if exceed max step
+            if i > 90:
                 break
+            # ------------------------------------------------------------
             i += 1
+        # ----------------------------------------------------------------
+        # move arm back
+        print("out")
         pause_event.set()
         Mem.write_data([3], address)
         while True:
             data = Mem.read_data(1, address=address)
             if data[0] == 10: 
                 break
-        
         pause_event._flag = False
-            
-        print("out")
-        is_success = 1 if success_event.is_set() else is_success
+        # ----------------------------------------------------------------
+        # record success or not
+        is_success = 0 if is_success == -1 else success_event.is_set()
         success_list.append(is_success)
+    # --------------------------------------------------------------------
+    # end of all episode
     print(success_list)
     print(sum(success_list) / len(success_list))
     
     Mem.write_data([-1], address)
     time.sleep(0.1)
         
-        
     # 發送停止信號
     print("Sending stop signal...")
     stop_event.set()        
     # cv2.destroyAllWindows()
-        
-        
-    # =======================================================================================
-    # image_path = "/home/yen/mount/nas/111/111033631_Yen/ARM/GAN_images/all/test/img_0804.jpg"
-    # image_path = "/home/yen/mount/nas/111/111033631_Yen/ARM/GAN_images/_010_010_010_shuffle_False_502_36/test/img_0002.jpg"
-    # a, b = read_from_PIL(image_path)
-    # image_path = "/home/yen/mount/nas/111/111033631_Yen/ARM/capture_images_real/Jun17_H15_M21_S56_010_010_010_shuffle_False_502_36_001/img_0000.jpg"
-    # # ab = cv2.imread(image_path, 0)
-    # # a, b = split_image(ab)
-    
-    # # transform = get_tensor()
-    
-    
-    # image_path = "/home/yen/mount/nas/111/111033631_Yen/ARM/capture_images_real/images/Jul02_H22_M27_S59/img_1_color.bmp"
-    # image_path = "/home/yen/mount/nas/111/111033631_Yen/ARM/capture_images_real/Jul16_H14_M43_S14_010_0100_882_882_002/img_0000.bmp"
-    # image_path = r"\\140.114.141.95\nas\111\111033631_Yen\ARM\capture_images_real\Jul16_H14_M43_S14_010_0100_882_882_002\img_0000.bmp"
-    # a = Image.open(image_path)
-    # a.save('real_A_img.jpg')
-    # a_tensor = get_tensor(a)
-    
-    # fake_B_tensor, displacement = model.S2R_displacement(a_tensor)  
-    # fake_B_img = reverse_transform(fake_B_tensor.cpu())
-    
-    # cv2.imwrite('fake_B_img.jpg', fake_B_img)
-    
-    
-    # image_path_list = glob.glob(r"\\140.114.141.95\nas\111\111033631_Yen\ARM\GAN_images\_010_0100_882_882\test\*.jpg")
-    # folder_name =os.path.basename(os.path.dirname(image_path_list[0]))
-    
-    # folder_dir = f"./test_newww/{folder_name}__"
-    # os.makedirs(folder_dir, exist_ok=True)
-    
-    # for i, image_path in enumerate(image_path_list):
-    #     base_name = os.path.basename(image_path)
-    #     print(i, os.path.basename(image_path))
-        
-        
-    #     a, b = read_from_PIL(image_path)
-    #     # a = Image.open(image_path)
-    #     a.save(f"{folder_dir}/{base_name[:-4]}.png")
-        
-    #     a_tensor = get_tensor(a)
-    #     fake_B_tensor, displacement = model.S2R_displacement(a_tensor)  
-    #     fake_B_img = reverse_transform(fake_B_tensor.cpu())
-        
-    #     cv2.imwrite(f"{folder_dir}/{base_name[:-4]}_fake_B.png", fake_B_img)
-    
-
-    
-    
-    # # fake_B_1 = a_tensor
-    # # fake_B_2 = aa_tensor
-    # # fake_B_1 = model.real_A.cpu()
-    # # fake_B_2 = data["A"].cpu()
-    # # fake_B_1 = model.fake_B
-    # # fake_B_1 = model.netG(data["A"])
-    # # fake_B_2 = model.netG(model.real_A)
-
-    # # comparison_result = torch.eq(fake_B_1, fake_B_2)
-    
-    # # allclose = torch.allclose(fake_B_1, fake_B_2)
-    # # print("-")
-    # # print("allclose", allclose)
-    # # print("-")    
-    
-    
-    
-    
-    # # image = cv2.imread(image_path, 0)
-
-    # # a, b = split_image(image)
-    
-    
-    # # with torch.no_grad():
-    # #     model.eval()
-    # #     fake_B = model.netG(a_tensor)
-    # #     # print(fake_B[0, 0, 56, :10])
-        
-    # #     fake_B_RL = fake_B / 2.0 + 0.5
-    # #     fake_B_RL = model.agent.DQN(fake_B_RL)    
-    # #     action = fake_B_RL.argmax(1)[0].item()
-    # #     # print(fake_B_RL[0, :10])
-    # #     # print("-")
-    # #     # print("aciton", action)
-    # #     # print("-")
-    
-    
-    # # r, t, p = spread_index_into_spherical(action, 
-    # #                                         theta_num=8, 
-    # #                                         shell_unit_length=0.025)
-    # # displacement = spherical_to_cartesian(r, t, p)
-    # # print(displacement)  
-    
-    # # displacement = model.S2R_displacement(a_tensor)  
-    # # print(displacement)  
-    # # model.eval()
-    # # while True:
-    # #     frame = get_frame()
-    # #     frame_tensor = get_tensor(frame)
-    
-    # # =======================================================================================
-    
-    
-
-    # # initialize logger
-    # if opt.use_wandb:
-    #     wandb_run = wandb.init(project=opt.wandb_project_name, name=opt.name, config=opt) if not wandb.run else wandb.run
-    #     wandb_run._label(repo='CycleGAN-and-pix2pix')
-
-    # # create a website
-    # web_dir = os.path.join(opt.results_dir, opt.name, '{}_{}'.format(opt.phase, opt.epoch))  # define the website directory
-    # if opt.load_iter > 0:  # load_iter is 0 by default
-    #     web_dir = '{:s}_iter{:d}'.format(web_dir, opt.load_iter)
-    # print('creating web directory', web_dir)
-    # webpage = html.HTML(web_dir, 'Experiment = %s, Phase = %s, Epoch = %s' % (opt.name, opt.phase, opt.epoch))
-    # # test with eval mode. This only affects layers like batchnorm and dropout.
-    # # For [pix2pix]: we use batchnorm and dropout in the original pix2pix. You can experiment it with and without eval() mode.
-    # # For [CycleGAN]: It should not affect CycleGAN as CycleGAN uses instancenorm without dropout.
-    # if opt.eval:
-    #     model.eval()
-    # for i, data in enumerate(dataset):
-    #     # if i >= opt.num_test:  # only apply our model to opt.num_test images.
-    #     if i >= 1:  # only apply our model to opt.num_test images.
-    #         break
-    #     model.set_input(data)  # unpack data from data loader
-    #     model.test()           # run inference        
-        
-    #     model.compute_loss()
-    #     visuals = model.get_current_visuals()  # get image results
-    #     img_path = model.get_image_paths()     # get image paths
-    #     if i % 5 == 0:  # save images to an HTML file
-    #         print('processing (%04d)-th image... %s' % (i, img_path))
-    #     save_images(webpage, visuals, img_path, aspect_ratio=opt.aspect_ratio, width=opt.display_winsize, use_wandb=opt.use_wandb)
-    
-    
-    # # ----------------------------------------------------------------------------
-    # # save_txt(opt, model.losses_list, model.same_list)
-    # # print(model.losses_list)
-    # # print(model.same_list)
-    # # print("--------------------------------------")
-    # # print("loss mean: \t", np.mean(model.losses_list), "\n"
-    # #       "loss std:  \t", np.std(model.losses_list), "\n"
-    # #       "loss max:  \t", np.max(model.losses_list), "\n"
-    # #       "loss min:  \t", np.min(model.losses_list), "\n"
-    # #       "loss lens: \t", len(model.losses_list), "\n"
-    # #     #   "success rate:\t", np.mean(model.same_list)
-    # #       )
-    # # print("--------------------------------------")
-    # # webpage.save()  # save the HTML
+    # --------------------------------------------------------------------
