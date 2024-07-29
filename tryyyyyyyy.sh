@@ -7,6 +7,7 @@ n_epochs=200
 
 # model name
 model_prefix="S2R_256_arm_trajectory_3090"
+data_folder_name="002_003_005_test_006"
 
 # loss setting
 # # G_GAN_existed="G_GAN"
@@ -23,7 +24,7 @@ netD_existed=1
 input_nc_list=(3)
 which_DQN="010"
 
-data_dir="/home/yen/mount/nas/111/111033631_Yen/ARM/GAN_images/_010_0100_882_882"
+data_dir="/home/yen/mount/nas/111/111033631_Yen/ARM/GAN_images/${data_folder_name}"
 
 
 # 迴圈處理
@@ -48,7 +49,7 @@ for gan_loss in "${gan_loss_list[@]}"; do
             fi
 
             # 拼接 model_name 和 GAN_loss_set
-            model_name="${model_prefix}_input${input_nc}_DQN${is_added_DQN}_netD${netD_existed}_${G_GAN_existed}${desh_G_L1}${desh_gan_loss}"
+            model_name="${model_prefix}_${data_folder_name}_input${input_nc}_DQN${is_added_DQN}_netD${netD_existed}_${G_GAN_existed}${desh_G_L1}${desh_gan_loss}"
             netG_loss_setting="${G_GAN_existed}${plus_G_L1}${plus_gan_loss}"
             echo "$model_name"
             echo "$netG_loss_setting"
