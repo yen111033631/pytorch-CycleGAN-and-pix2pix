@@ -81,8 +81,8 @@ if __name__ == '__main__':
     stop_event = threading.Event()
 
     # 創建並啟動線程
-    thread1 = threading.Thread(target=get_frame, args=(my_cam, stop_event,))
-    thread1.start()
+    thread_cam = threading.Thread(target=get_frame, args=(my_cam, stop_event,))
+    thread_cam.start()
     time.sleep(1)
 
     
@@ -102,12 +102,11 @@ if __name__ == '__main__':
         # check ik
         cube_p = cube_position.copy()
         cube_p[-1] = 0.1
-        print(check_ik_is_good(DRV_chain, cube_p))
-        # -----------------
-        
+        is_flip = check_wrist_flip(DRV_chain, cube_p)
+        # -----------------        
         
         # write data into memory
-        Mem.write_data([2, *j, *p], address)
+        Mem.write_data([2, *p, is_flip], address)
         detect_y()
         Mem.write_data([3], address)
         time.sleep(2)
@@ -171,7 +170,7 @@ if __name__ == '__main__':
             # check if next position is safe
             print(i, next_position)
             if not(check_next_position_is_safe(next_position)):
-                is_success = -1
+                is_success = 0
                 print("not safe")
                 pause_event.set()
                 time.sleep(.2)
@@ -185,13 +184,15 @@ if __name__ == '__main__':
             # write data into memory            
             next_position__ = [x * 1000 for x in next_position]            
             pause_event.set()
-            time.sleep(.2)
+            time.sleep(.02)
             if success_event.is_set():
+                is_success = 1
                 Mem.write_data([3], address)
                 break
             else:
-                Mem.write_data([1, *j, *next_position__], address)
-            time.sleep(0.1)
+                is_success = 0
+                Mem.write_data([1, *next_position__, check_wrist_flip(DRV_chain, next_position)], address)
+            time.sleep(0.01)
             pause_event._flag = False
             # ------------------------------------------------------------
             # check if exceed max step
@@ -211,7 +212,6 @@ if __name__ == '__main__':
         pause_event._flag = False
         # ----------------------------------------------------------------
         # record success or not
-        is_success = 0 if is_success == -1 else success_event.is_set()
         success_list.append(is_success)
     # --------------------------------------------------------------------
     # end of all episode

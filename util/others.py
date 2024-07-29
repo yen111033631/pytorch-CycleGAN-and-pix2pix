@@ -259,7 +259,7 @@ def detect_y():
 def read_urdf(urdf_path):
     return Chain.from_urdf_file(urdf_path)
 
-def check_ik_is_good(chain, target_position, target_orientation=[0, 0, -1], orientation_mode="Z"):
+def check_wrist_flip(chain, target_position, target_orientation=[0, 0, -1], orientation_mode="Z"):
     ik = chain.inverse_kinematics(target_position, 
                                   target_orientation, 
                                   orientation_mode)
