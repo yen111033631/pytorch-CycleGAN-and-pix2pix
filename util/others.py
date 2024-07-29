@@ -203,11 +203,17 @@ def check_is_success(position_xyz, target_xyz, lift_height=0.12, success_distanc
         return True
     else:
         return False
+
+# def in_cube_target(position_xyz, target_xyz, lift_height=0.12):
+#     target_xyz_ = target_xyz.copy()
+#     target_xyz_[2] = target_xyz_[2] + lift_height
+#     if abs(position_xyz[2] - target_xyz_[2]) < 0.08:
+        
     
     
 def get_frame(my_cam, event):
     fourcc = cv2.VideoWriter_fourcc(*'XVID')
-    out = cv2.VideoWriter('output.avi', fourcc, 30.0, (1280, 720))
+    out = cv2.VideoWriter('video/output.avi', fourcc, 30.0, (1280, 720))
     
     while not event.is_set():
         frame = my_cam.get_frame()

@@ -90,10 +90,10 @@ if __name__ == '__main__':
     j = [0] * 6
     
     success_list = []
-    for k in range(10):
+    for k in range(50):
         # ----------------------------------------------------------------
         # set cube position
-        cube_position = df.iloc[k]
+        cube_position = df.iloc[k+10]
         cube_position__ = [x * 1000 for x in cube_position]
         print("cube_position", cube_position)
         p = [*cube_position__[:2], 100]
@@ -111,26 +111,8 @@ if __name__ == '__main__':
         Mem.write_data([3], address)
         time.sleep(2)
         # ----------------------------------------------------------------
-        # detect success distance event
-        # 創建一個事件對象
-        success_event = threading.Event()
-        pause_event = threading.Event()
-        target_position = cube_position.copy()
-        target_position[-1] = target_position[-1] + 0.1
-        success_distance = 0.05
-
-        # 創建並啟動線程
-        thread2 = threading.Thread(target=detect_success, args=(success_event, 
-                                                                pause_event, 
-                                                                target_position, 
-                                                                success_distance, 
-                                                                Mem,
-                                                                ))
-        thread2.start()        
-        time.sleep(2)
-        # ----------------------------------------------------------------
         i = 0
-        while not success_event.is_set():
+        while True:
             # ------------------------------------------------------------
             # get frame
             frame = my_cam.color_image
@@ -158,42 +140,37 @@ if __name__ == '__main__':
 
             # ------------------------------------------------------------
             # get next position
-            position = Mem.arm_position
-            next_position = position + displacement
-            # ------------------------------------------------------------
+            position = Mem.read_data(3, address=0x00F0)
+            next_position = position + displacement       
             
-            # if i == 1:
-            #     # next_position = [0.24,-0.3, 0.199]
-            #     next_position = [0.112151, -0.378836, 0.18000699]
-            
+            # if i == 0:
+            #     next_position = cube_position.copy()
+            #     next_position[-1] = next_position[-1] + 0.12
+            #     print("-")
+            #     print("cube_position", cube_position)
+            #     print("next_position", next_position)
             # ------------------------------------------------------------
             # check if next position is safe
             print(i, next_position)
             if not(check_next_position_is_safe(next_position)):
                 is_success = 0
                 print("not safe")
-                pause_event.set()
-                time.sleep(.2)
                 Mem.write_data([3], address)
                 time.sleep(.01)
-                pause_event._flag = False
-                success_event.set()
                 break
             
+            is_success = check_is_success(next_position, cube_position)            
             # ------------------------------------------------------------
             # write data into memory            
             next_position__ = [x * 1000 for x in next_position]            
-            pause_event.set()
-            time.sleep(.02)
-            if success_event.is_set():
-                is_success = 1
-                Mem.write_data([3], address)
-                break
-            else:
-                is_success = 0
-                Mem.write_data([1, *next_position__, check_wrist_flip(DRV_chain, next_position)], address)
+            Mem.write_data([1, *next_position__, check_wrist_flip(DRV_chain, next_position), is_success], address)
             time.sleep(0.01)
-            pause_event._flag = False
+            if is_success:
+                while True:
+                    data = Mem.read_data(1, address=0x1200)
+                    if data[0] == 87: break   
+                    time.sleep(1)
+                break                         
             # ------------------------------------------------------------
             # check if exceed max step
             if i > 90:
@@ -203,15 +180,13 @@ if __name__ == '__main__':
         # ----------------------------------------------------------------
         # move arm back
         print("out")
-        pause_event.set()
         Mem.write_data([3], address)
         while True:
             data = Mem.read_data(1, address=address)
-            if data[0] == 10: 
-                break
-        pause_event._flag = False
+            if data[0] == 10: break
         # ----------------------------------------------------------------
         # record success or not
+        print(is_success)
         success_list.append(is_success)
     # --------------------------------------------------------------------
     # end of all episode
