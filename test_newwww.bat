@@ -4,7 +4,9 @@ setlocal enabledelayedexpansion
 
 rem ----------------------------------
 @REM set model_name_list="S2R_256_arm_trajectory_3090_input3_DQN1_netD1_G_GAN_G_L1"
-set model_name_list="S2R_256_arm_trajectory_3090_002_003_005_test_006_input3_DQN1_netD1_G_GAN_G_L1"
+@REM set model_name_list="S2R_256_arm_trajectory_3090_002_003_005_test_006_input3_DQN1_netD1_G_GAN_G_L1"
+set model_name_list="S2R_256_arm_trajectory_3090_002_003_005_test_006_input3_DQN0_netD1_G_GAN_G_L1"
+@REM set model_name_list="S2R_256_DQN0_netD1_G_GAN_G_L1"
 rem ----------------------------------
 rem add DQN, netG_loss_setting "G_GAN+G_L1"
 

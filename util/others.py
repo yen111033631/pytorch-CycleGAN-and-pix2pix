@@ -4,6 +4,8 @@ import cv2, torch
 from PIL import Image
 from pynput import keyboard
 from ikpy.chain import Chain
+from datetime import datetime
+import os
 
 # ------------------------------------------------------------------
 # random seed 
@@ -193,27 +195,36 @@ def calculate_distance(a_position, b_position):
     return distance 
 
 
-def check_is_success(position_xyz, target_xyz, lift_height=0.12, success_distance=0.05):
+def check_is_success(position_xyz, target_xyz, lift_height=0.12, success_distance=0.05, success_type="distance"):
     target_xyz_ = target_xyz.copy()
     target_xyz_[2] = target_xyz_[2] + lift_height
     
-    dis = calculate_distance(position_xyz, target_xyz_)
+    if success_type == "distance":
+        dis = calculate_distance(position_xyz, target_xyz_)    
+        return dis <= success_distance
     
-    if dis <= success_distance:
-        return True
+    elif success_type == "block":
+        target_min = np.asarray(target_xyz_) - success_distance
+        target_max = np.asarray(target_xyz_) + success_distance
+        return is_in_range_xyz(position_xyz, target_min, target_max)
+    
     else:
         return False
 
-# def in_cube_target(position_xyz, target_xyz, lift_height=0.12):
-#     target_xyz_ = target_xyz.copy()
-#     target_xyz_[2] = target_xyz_[2] + lift_height
-#     if abs(position_xyz[2] - target_xyz_[2]) < 0.08:
+def is_in_range_xyz(xyz, xyz_min, xyz_max):
+    return xyz_min[0] <= xyz[0] <= xyz_max[0] \
+        and xyz_min[1] <= xyz[1] <= xyz_max[1] \
+        and xyz_min[2] <= xyz[2] <= xyz_max[2]
         
     
     
-def get_frame(my_cam, event):
+def get_frame(my_cam, event, model_name):
     fourcc = cv2.VideoWriter_fourcc(*'XVID')
-    out = cv2.VideoWriter('video/output.avi', fourcc, 30.0, (1280, 720))
+    # out = cv2.VideoWriter('video/output.avi', fourcc, 30.0, (1280, 720))
+    current_time = datetime.now().strftime("%b%d_H%H_M%M_S%S")
+    print("current_time", current_time)
+    os.makedirs(rf'D:\research_video\video\{model_name}', exist_ok=True)
+    out = cv2.VideoWriter(rf'D:\research_video\video\{model_name}\{current_time}_output.avi', fourcc, 30.0, (1280, 720))
     
     while not event.is_set():
         frame = my_cam.get_frame()

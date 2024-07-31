@@ -97,7 +97,7 @@ class MemoryCommunicator:
         self.c = connect_robot()
 
     def write_data(self, x, address=0x1100):
-        flattened_list = turn_into_one_list(x)
+        flattened_list = turn_into_one_list(np.round(x, 6))
         i = 0
         while True:
             success = self.c.write_multiple_registers(address, flattened_list)

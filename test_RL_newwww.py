@@ -76,12 +76,13 @@ if __name__ == '__main__':
     # csv_dir = r"\\140.114.141.95\nas\111\111033631_Yen\ARM\capture_images_sim\cube_points__.csv"
     csv_name = os.path.basename(os.path.dirname(csv_dir))
     df = pd.read_csv(csv_dir)
+    # df = df[14:]
     
     # 創建一個事件對象
     stop_event = threading.Event()
 
     # 創建並啟動線程
-    thread_cam = threading.Thread(target=get_frame, args=(my_cam, stop_event,))
+    thread_cam = threading.Thread(target=get_frame, args=(my_cam, stop_event, opt.name, ))
     thread_cam.start()
     time.sleep(1)
 
@@ -90,10 +91,10 @@ if __name__ == '__main__':
     j = [0] * 6
     
     success_list = []
-    for k in range(50):
+    for k in range(10):
         # ----------------------------------------------------------------
         # set cube position
-        cube_position = df.iloc[k+10]
+        cube_position = df.iloc[k]
         cube_position__ = [x * 1000 for x in cube_position]
         print("cube_position", cube_position)
         p = [*cube_position__[:2], 100]
@@ -159,13 +160,14 @@ if __name__ == '__main__':
                 time.sleep(.01)
                 break
             
-            is_success = check_is_success(next_position, cube_position)            
+            is_success = check_is_success(next_position, cube_position, success_type="block")            
             # ------------------------------------------------------------
             # write data into memory            
             next_position__ = [x * 1000 for x in next_position]            
             Mem.write_data([1, *next_position__, check_wrist_flip(DRV_chain, next_position), is_success], address)
             time.sleep(0.01)
             if is_success:
+                print("success")
                 while True:
                     data = Mem.read_data(1, address=0x1200)
                     if data[0] == 87: break   
@@ -178,16 +180,17 @@ if __name__ == '__main__':
             # ------------------------------------------------------------
             i += 1
         # ----------------------------------------------------------------
+        # record success or not
+        success_list.append(is_success)
+        print(is_success)
+        print(np.average(success_list))
+        # ----------------------------------------------------------------
         # move arm back
         print("out")
         Mem.write_data([3], address)
         while True:
             data = Mem.read_data(1, address=address)
             if data[0] == 10: break
-        # ----------------------------------------------------------------
-        # record success or not
-        print(is_success)
-        success_list.append(is_success)
     # --------------------------------------------------------------------
     # end of all episode
     print(success_list)
