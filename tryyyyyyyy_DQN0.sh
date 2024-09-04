@@ -3,11 +3,11 @@
 
 # ----------------------------------
 # original train
-n_epochs=200
+n_epochs=1
 
 # model name
-model_prefix="S2R_256_arm_trajectory_3090"
-data_folder_name="002_003_005_test_006"
+model_prefix="S2R_256_arm"
+# data_folder_name="002_003_005_test_006"
 
 # loss setting
 # # G_GAN_existed="G_GAN"
@@ -19,19 +19,23 @@ G_L1_list=("G_L1")
 gan_loss_list=("")
 
 # some setting
-is_added_DQN=1
+is_added_DQN=0       # 0: basic, 1: numerical 
 netD_existed=1
-input_nc_list=(3)
+input_nc=3
 which_DQN="010"
 
-data_dir="/home/yen/mount/nas/111/111033631_Yen/ARM/GAN_images/${data_folder_name}"
+# data_dir="/home/yen/mount/nas/111/111033631_Yen/ARM/GAN_images/${data_folder_name}"
+
+data_folder_name_list=(002_003_005_a 002_003_005_b 002_003_005_c 002_003_005_d 002_003_005_e \
+    002_003_005_006_a 002_003_005_006_b 002_003_005_006_c 002_003_005_006_d 002_003_005_006_e \
+    )
+data_dir="/home/yen/code/yen/DATA/GAN_images"
 
 
 # 迴圈處理
 for gan_loss in "${gan_loss_list[@]}"; do
     for G_L1 in "${G_L1_list[@]}"; do
-        for input_nc in "${input_nc_list[@]}"; do
-
+        for data_folder_name in "${data_folder_name_list[@]}"; do
             if [[ "$G_L1" == "G_L1" ]]; then
                 desh_G_L1="_${G_L1}"
                 plus_G_L1="+${G_L1}"
@@ -54,7 +58,7 @@ for gan_loss in "${gan_loss_list[@]}"; do
             echo "$model_name"
             echo "$netG_loss_setting"
             echo "---------------------------------"
-            python train.py --dataroot "${data_dir}" \
+            python train.py --dataroot "${data_dir}/${data_folder_name}" \
                             --model pix2pix \
                             --direction AtoB \
                             --netG resnet_9blocks \
@@ -66,7 +70,7 @@ for gan_loss in "${gan_loss_list[@]}"; do
                             --is_added_DQN ${is_added_DQN} \
                             --which_DQN "${which_DQN}" \
                             --netD_existed ${netD_existed} \
-                            --netD "numerical" \
+                            --netD "basic" \
                             --netD_input B \
                             --netG_loss_setting "${netG_loss_setting}" \
                             --n_epochs ${n_epochs} \
@@ -80,7 +84,7 @@ for gan_loss in "${gan_loss_list[@]}"; do
                             --netG resnet_9blocks \
                             --crop_size 256 \
                             --load_size 256 \
-                            --num_test 500 \
+                            --num_test 1000 \
                             --input_nc ${input_nc} \
                             --output_nc 1 \
                             --name "${model_name}" \

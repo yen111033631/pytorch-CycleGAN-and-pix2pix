@@ -36,6 +36,8 @@ import numpy as np
 import torch
 import matplotlib.pyplot as plt
 
+import pandas as pd
+
 try:
     import wandb
 except ImportError:
@@ -80,6 +82,14 @@ def save_loss_png(loss:list):
     plt.ylabel('Frequency')
     plt.grid(True)
     plt.savefig(f"./results/{opt.name}/test_latest/loss.png")
+
+def save_csv(loss:list):
+    
+    # 將列表轉換為 Pandas Series
+    data_series = pd.Series(loss)
+
+    # 存成 CSV 檔案
+    data_series.to_csv(f"./results/{opt.name}/test_latest/loss_series.csv", index=False, header=False)
     
 
 if __name__ == '__main__':
@@ -123,7 +133,9 @@ if __name__ == '__main__':
         save_images(webpage, visuals, img_path, aspect_ratio=opt.aspect_ratio, width=opt.display_winsize, use_wandb=opt.use_wandb)
     
     save_txt(opt, model.losses_list, model.same_list)
-    save_loss_png(model.losses_list)
+    save_loss_png(model.losses_list)    
+    save_csv(model.losses_list)
+    
     # print(model.losses_list)
     # print(model.same_list)
     print("--------------------------------------")

@@ -22,6 +22,7 @@ model_name_list=( \
                 #  "S2R_256_DQN0_netD1_origin_wgan" \
                 #  "S2R_256_DQN1_netD1_netGloss_GAN_L1_wgan" \
                 #  "S2R_256_arm_trajectory_3090_input3_DQN1_netD1_G_GAN_G_L1" \
+                 "S2R_256_arm_trajectory_3090_002_003_005_test_006_input3_DQN0_netD1_G_GAN_G_L1" \
                  "S2R_256_arm_trajectory_3090_002_003_005_test_006_input3_DQN1_netD1_G_GAN_G_L1" \
                 #  "S2R_256_cam_shift_all_1500_input3_DQN1_netD1_G_GAN_G_L1" \
                  )
@@ -45,5 +46,5 @@ do
                     --is_added_DQN 1 \
                     --which_DQN "010"
     
-    mv results/${model_name}/test_latest results/${model_name}/${data_folder_name}
+    # mv results/${model_name}/test_latest results/${model_name}/test_400
 done                    
