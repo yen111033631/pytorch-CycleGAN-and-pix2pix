@@ -3,7 +3,7 @@
 
 # ----------------------------------
 # original train
-n_epochs=1
+n_epochs=200
 
 # model name
 model_prefix="S2R_256_arm"
@@ -58,27 +58,27 @@ for gan_loss in "${gan_loss_list[@]}"; do
             echo "$model_name"
             echo "$netG_loss_setting"
             echo "---------------------------------"
-            python train.py --dataroot "${data_dir}/${data_folder_name}" \
-                            --model pix2pix \
-                            --direction AtoB \
-                            --netG resnet_9blocks \
-                            --crop_size 256 \
-                            --load_size 256 \
-                            --input_nc ${input_nc} \
-                            --output_nc 1 \
-                            --name "${model_name}" \
-                            --is_added_DQN ${is_added_DQN} \
-                            --which_DQN "${which_DQN}" \
-                            --netD_existed ${netD_existed} \
-                            --netD "numerical" \
-                            --netD_input B \
-                            --netG_loss_setting "${netG_loss_setting}" \
-                            --n_epochs ${n_epochs} \
-                            --n_epochs_decay ${n_epochs} \
-                            --gan_mode "lsgan"
+            # python train.py --dataroot "${data_dir}/${data_folder_name}" \
+            #                 --model pix2pix \
+            #                 --direction AtoB \
+            #                 --netG resnet_9blocks \
+            #                 --crop_size 256 \
+            #                 --load_size 256 \
+            #                 --input_nc ${input_nc} \
+            #                 --output_nc 1 \
+            #                 --name "${model_name}" \
+            #                 --is_added_DQN ${is_added_DQN} \
+            #                 --which_DQN "${which_DQN}" \
+            #                 --netD_existed ${netD_existed} \
+            #                 --netD "numerical" \
+            #                 --netD_input B \
+            #                 --netG_loss_setting "${netG_loss_setting}" \
+            #                 --n_epochs ${n_epochs} \
+            #                 --n_epochs_decay ${n_epochs} \
+            #                 --gan_mode "lsgan"
 
             
-            python test_RL.py --dataroot "${data_dir}" \
+            python test_RL.py --dataroot "${data_dir}/${data_folder_name}" \
                             --model pix2pix \
                             --direction AtoB \
                             --netG resnet_9blocks \

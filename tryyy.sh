@@ -1,0 +1,2 @@
+source tryyyyyyyy_DQN1.sh
+source tryyyyyyyy_DQN0.sh
